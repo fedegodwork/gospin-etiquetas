@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Generador de Etiquetas • GoSpin</title>
 
-<!-- Exportación a PDF -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
@@ -21,42 +20,43 @@
   .card{ background:#fff; border:1px solid #e6e8eb; border-radius:14px; box-shadow:0 10px 20px rgba(0,0,0,.04) }
   .card .card-body{ padding:18px }
 
+  /* FORM LATERAL */
   .field{ margin-bottom:12px }
   .field label{ display:block; font-size:12px; font-weight:800; margin-bottom:6px }
   .field input,.field textarea{ width:100%; padding:10px 12px; border:1px solid #cfd3d7; border-radius:10px; font-size:14px }
   .row{ display:grid; grid-template-columns:1fr 180px; gap:10px }
-
   .actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:8px }
   button{ appearance:none; border:0; background:var(--brand); color:#fff; padding:10px 14px; border-radius:10px; font-weight:800; cursor:pointer }
   button.secondary{ background:#e2e8f0; color:#0f172a }
 
-  /* Vista previa exacta 10×15 cm */
+  /* PREVIEW 10×15 */
   .preview-wrap{ display:flex; justify-content:center; align-items:flex-start; padding:16px }
   .preview{ width:100mm; height:150mm; background:#fff; color:#000; position:relative; border:1px solid #d1d5db }
 
-  /* Contenido de la etiqueta */
-  .label{ position:absolute; inset:7mm; border:1.6px solid #000; padding:7mm; display:flex; flex-direction:column; gap:5mm }
-  .brand-row{ display:grid; grid-template-columns: 1fr auto; align-items:center }
+  /* Etiqueta */
+  .label{
+    position:absolute; inset:8mm;
+    border:1.6px solid #000; padding:6mm;
+    display:flex; flex-direction:column; gap:4mm;
+  }
+  .brand-row{ display:grid; grid-template-columns:1fr auto; align-items:center }
   .brand-title{ font-weight:900; font-size:12px; letter-spacing:.2px }
-  .brand-logo{ width:28mm; height:auto; object-fit:contain; }
+  .brand-logo{ width:26mm; height:auto; object-fit:contain }
 
-  .fieldbox{ display:flex; flex-direction:column; gap:1.8mm }
-  .flabel{ font-size:9.6px; font-weight:900 }
+  .fieldbox{ display:flex; flex-direction:column; gap:1.2mm }
+  .flabel{ font-size:9.6px; font-weight:900 } /* SOLO TITULO, sin paréntesis */
   .box{
-    border:1px solid #000;
-    padding:4mm;           /* más padding para legibilidad */
-    min-height:14mm;       /* altura mínima mayor */
-    font-size:12px;
-    line-height:1.15;
-    white-space:pre-wrap; word-wrap:break-word
+    border:1px solid #000; padding:3.2mm;
+    min-height:12mm; font-size:12px; line-height:1.15;
+    white-space:pre-wrap; word-wrap:break-word;
   }
 
-  /* Fila Localidad / CP con ancho fijo de CP */
-  .row2{ display:grid; grid-template-columns: 1fr 35mm; gap:4mm; align-items:start }
-  .cp .box{ font-weight:900; font-size:16px; text-align:left }
+  /* Localidad / CP bien alineados */
+  .row2{ display:grid; grid-template-columns: 1fr 32mm; gap:3.5mm; align-items:start }
+  .cp .box{ font-weight:900; font-size:16px }
 
-  /* Observaciones: mitad de alto previo, pero con mejor lectura por padding */
-  .obs .box{ min-height:22mm }
+  /* Observaciones: mitad de alto respecto al primero que tenías */
+  .obs .box{ min-height:20mm }
 
   .website{ text-align:center; font-weight:900; font-size:11px; margin-top:auto }
 
@@ -76,34 +76,34 @@
   </header>
 
   <main>
-    <!-- Panel de ingreso -->
+    <!-- PANEL DE CARGA (las ayudas en paréntesis VAN SOLO AQUÍ) -->
     <section class="card printable">
       <div class="card-body">
         <div class="field">
-          <label>REMITENTE (INGRESAR UNICAMENTE NOMBRE DE COMERCIO)</label>
-          <input id="f-remitente" maxlength="64" placeholder="Ej: Boutique Sol" />
+          <label>REMITENTE</label>
+          <input id="f-remitente" maxlength="64" placeholder="(Ingresar únicamente nombre de comercio)"/>
         </div>
         <div class="field">
           <label>NOMBRE COMPLETO DE QUIEN RECIBE</label>
-          <input id="f-nombre" maxlength="64" placeholder="Ej: Juan Pérez" />
+          <input id="f-nombre" maxlength="64" placeholder="(Nombre y Apellido)"/>
         </div>
         <div class="field">
-          <label>DOMICILIO (CALLE, NUMERO, PISO DEPARTAMENTO)</label>
-          <input id="f-domicilio" maxlength="90" placeholder="Ej: Av. Siempre Viva 742, 3° B" />
+          <label>DOMICILIO</label>
+          <input id="f-domicilio" maxlength="90" placeholder="(Calle, Número, Piso/Departamento)"/>
         </div>
         <div class="row">
           <div class="field">
             <label>LOCALIDAD</label>
-            <input id="f-localidad" maxlength="48" placeholder="Ej: Vicente López" />
+            <input id="f-localidad" maxlength="48" placeholder="(Ciudad/Localidad)"/>
           </div>
           <div class="field">
             <label>CÓDIGO POSTAL</label>
-            <input id="f-cp" inputmode="numeric" maxlength="4" placeholder="1602" />
+            <input id="f-cp" inputmode="numeric" maxlength="4" placeholder="(4 dígitos, ej. 1602)"/>
           </div>
         </div>
         <div class="field">
           <label>OBSERVACIONES</label>
-          <textarea id="f-obs" rows="3" maxlength="220" placeholder="Frágil. Entregar 9-18 hs. Segunda visita sin costo."></textarea>
+          <textarea id="f-obs" rows="3" maxlength="220" placeholder="(Frágil, horario de entrega, portería, etc.)"></textarea>
         </div>
 
         <div class="actions">
@@ -117,7 +117,7 @@
       </div>
     </section>
 
-    <!-- Vista previa -->
+    <!-- VISTA PREVIA (lo que se imprime) -->
     <section class="card">
       <div class="preview-wrap">
         <div class="preview" id="preview">
@@ -127,16 +127,19 @@
               <img src="gospinlogo.png" alt="GoSpin" class="brand-logo" />
             </div>
 
+            <!-- En la etiqueta: SOLO TITULOS (sin paréntesis) -->
             <div class="fieldbox remitente">
-              <div class="flabel">REMITENTE (INGRESAR UNICAMENTE NOMBRE DE COMERCIO)</div>
+              <div class="flabel">REMITENTE</div>
               <div class="box" id="v-remitente"></div>
             </div>
+
             <div class="fieldbox nombre">
               <div class="flabel">NOMBRE COMPLETO DE QUIEN RECIBE</div>
               <div class="box" id="v-nombre"></div>
             </div>
+
             <div class="fieldbox domicilio">
-              <div class="flabel">DOMICILIO (CALLE, NUMERO, PISO DEPARTAMENTO)</div>
+              <div class="flabel">DOMICILIO</div>
               <div class="box" id="v-domicilio"></div>
             </div>
 
