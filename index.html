@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Generador de Etiquetas • GoSpin (v1.2)</title>
+<title>Generador de Etiquetas • GoSpin</title>
 
+<!-- Exportación a PDF -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
@@ -24,11 +25,10 @@
   .field{ margin-bottom:12px }
   .field label{ display:block; font-size:12px; font-weight:800; margin-bottom:6px }
   .field input,.field textarea{ width:100%; border:1px solid #cfd3d7; border-radius:10px; font-size:14px }
-
-  /* Coincidir altura con cuadros de la etiqueta (≈ 11 mm) */
-  .field input{ height:44px; padding:8px 12px; line-height:1.15; }          /* MATCH-HEIGHT v1.2 */
-  .row .field input{ height:44px; }                                          /* MATCH-HEIGHT v1.2 */
-  .field textarea{ min-height:64px; padding:10px 12px; line-height:1.15; resize:vertical; } /* ≈ 16 mm */
+  /* Coincidir altura con cuadros de la etiqueta (~11 mm) */
+  .field input{ height:44px; padding:8px 12px; line-height:1.15; }
+  .row .field input{ height:44px; }
+  .field textarea{ min-height:64px; padding:10px 12px; line-height:1.15; resize:vertical; }
 
   .row{ display:grid; grid-template-columns:1fr 180px; gap:10px }
 
@@ -54,7 +54,7 @@
   .box{
     border:1px solid #000;
     padding:2.8mm;
-    min-height:11mm;                 /* = 44px aprox */
+    min-height:11mm;                 /* ~44px */
     font-size:12px; line-height:1.12;
     white-space:pre-wrap; word-wrap:break-word;
   }
@@ -76,11 +76,11 @@
 </head>
 <body>
   <header class="card printable">
-    <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.2)</h1>
+    <h1>Generador de Etiquetas (10×15 cm) • GoSpin</h1>
   </header>
 
   <main>
-    <!-- PANEL DE CARGA (los paréntesis son solo ayudas aquí) -->
+    <!-- PANEL DE CARGA (ayudas entre paréntesis SOLO aquí) -->
     <section class="card printable">
       <div class="card-body">
         <div class="field">
@@ -120,7 +120,7 @@
       </div>
     </section>
 
-    <!-- VISTA PREVIA -->
+    <!-- VISTA PREVIA (lo que se imprime) -->
     <section class="card">
       <div class="preview-wrap">
         <div class="preview" id="preview">
@@ -198,6 +198,7 @@
     $(id).addEventListener('input', sync);
   });
 
+  // Descargar PDF
   async function descargarPDF(){
     if(!validateCP()){ alert('El Código Postal debe tener 4 números.'); return; }
     sync();
