@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Generador de Etiquetas • GoSpin</title>
 
-<!-- Exportación a PDF -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
@@ -21,20 +20,19 @@
   .card{ background:#fff; border:1px solid #e6e8eb; border-radius:14px; box-shadow:0 10px 20px rgba(0,0,0,.04) }
   .card .card-body{ padding:18px }
 
-  /* FORM LATERAL */
   .field{ margin-bottom:12px }
   .field label{ display:block; font-size:12px; font-weight:800; margin-bottom:6px }
   .field input,.field textarea{ width:100%; padding:10px 12px; border:1px solid #cfd3d7; border-radius:10px; font-size:14px }
   .row{ display:grid; grid-template-columns:1fr 180px; gap:10px }
+
   .actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:8px }
   button{ appearance:none; border:0; background:var(--brand); color:#fff; padding:10px 14px; border-radius:10px; font-weight:800; cursor:pointer }
   button.secondary{ background:#e2e8f0; color:#0f172a }
 
-  /* PREVIEW 10×15 */
+  /* Vista previa exacta 10x15 cm */
   .preview-wrap{ display:flex; justify-content:center; align-items:flex-start; padding:16px }
   .preview{ width:100mm; height:150mm; background:#fff; color:#000; position:relative; border:1px solid #d1d5db }
 
-  /* Etiqueta */
   .label{
     position:absolute; inset:8mm;
     border:1.6px solid #000; padding:5mm;
@@ -56,12 +54,10 @@
 
   .row2{ display:grid; grid-template-columns: 1fr 30mm; gap:3mm; align-items:start }
   .cp .box{ font-weight:900; font-size:15px; text-align:left }
-
   .obs .box{ min-height:16mm }
 
   .website{ text-align:center; font-weight:900; font-size:11px; margin-top:auto }
 
-  /* Impresión exacta */
   @page{ size: 100mm 150mm; margin: 0 }
   @media print{
     header, .card:not(.printable), .preview-wrap { display:none !important }
@@ -108,10 +104,8 @@
         </div>
 
         <div class="actions">
-          <button id="btn-preview">Actualizar vista</button>
           <button id="btn-pdf">Descargar PDF</button>
           <button id="btn-clear" class="secondary">Nueva etiqueta</button>
-          <button class="secondary" onclick="window.print()">Imprimir / Guardar PDF (del navegador)</button>
         </div>
         <p style="font-size:12px; color:#475569; margin-top:10px">
           CP validado: sólo números y exactamente 4 dígitos. Los datos no se envían a ningún servidor.
@@ -119,7 +113,7 @@
       </div>
     </section>
 
-    <!-- VISTA PREVIA (lo que se imprime) -->
+    <!-- VISTA PREVIA -->
     <section class="card">
       <div class="preview-wrap">
         <div class="preview" id="preview">
@@ -171,7 +165,6 @@
   function $(id){ return document.getElementById(id); }
   function getVal(id){ return ($(id).value || '').trim(); }
 
-  // CP: sólo números (máx 4)
   $('f-cp').addEventListener('input', (e)=>{
     e.target.value = e.target.value.replace(/[^0-9]/g,'').slice(0,4);
   });
@@ -196,9 +189,7 @@
   ['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-obs'].forEach(id=>{
     $(id).addEventListener('input', sync);
   });
-  $('btn-preview').addEventListener('click', sync);
 
-  // Descargar PDF
   async function descargarPDF(){
     if(!validateCP()){ alert('El Código Postal debe tener 4 números.'); return; }
     sync();
@@ -214,7 +205,6 @@
   }
   $('btn-pdf').addEventListener('click', descargarPDF);
 
-  // Nueva etiqueta (limpiar)
   $('btn-clear').addEventListener('click', ()=>{
     ['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-obs'].forEach(id=>{
       $(id).value = '';
@@ -223,7 +213,6 @@
     $('f-remitente').focus();
   });
 
-  // Inicial
   sync();
 </script>
 </body>
