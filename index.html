@@ -3,9 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Generador de Etiquetas • GoSpin</title>
+<title>Generador de Etiquetas • GoSpin (v1.3.2)</title>
 
-<!-- Exportación a PDF -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
@@ -13,31 +12,52 @@
   :root{ --ink:#0f172a; --muted:#64748b; --brand:#0ea5e9; }
   *{ box-sizing:border-box }
   body{ font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif; margin:0; background:#f6f7f9; color:var(--ink) }
+
   header{ display:flex; align-items:center; gap:14px; padding:16px 20px; background:#fff; border-bottom:1px solid #e6e8eb }
   header h1{ font-size:18px; margin:0; font-weight:800 }
-  main{ display:grid; grid-template-columns: 420px 1fr; gap:20px; padding:20px; align-items:start }
-  @media (max-width: 980px){ main{ grid-template-columns:1fr } }
 
-  .card{ background:#fff; border:1px solid #e6e8eb; border-radius:14px; box-shadow:0 10px 20px rgba(0,0,0,.04) }
-  .card .card-body{ padding:18px }
+  /* GRID: estiramos ambas columnas para que tengan la MISMA altura */
+  main{
+    display:grid;
+    grid-template-columns: 420px 1fr;
+    gap:20px;
+    padding:20px;
+    align-items:stretch;            /* clave: ambas columnas mismo alto */
+    min-height: calc(100vh - 80px); /* que llene la pantalla */
+  }
+  @media (max-width: 980px){
+    main{ grid-template-columns:1fr; min-height:unset }
+  }
+
+  .card{
+    background:#fff; border:1px solid #e6e8eb; border-radius:14px; box-shadow:0 10px 20px rgba(0,0,0,.04);
+    height:100%;                     /* que la card ocupe toda la columna */
+    display:flex; flex-direction:column;
+  }
+  .card .card-body{ padding:18px; display:flex; flex-direction:column; gap:12px; flex:1 }
 
   /* -------- FORM LATERAL -------- */
-  .field{ margin-bottom:12px }
   .field label{ display:block; font-size:12px; font-weight:800; margin-bottom:6px }
-  .field input,.field textarea{ width:100%; border:1px solid #cfd3d7; border-radius:10px; font-size:14px }
-  /* Coincidir altura con cuadros de la etiqueta (~11 mm) */
+  .field input,.field textarea{
+    width:100%; border:1px solid #cfd3d7; border-radius:10px; font-size:14px;
+    background:#fff;
+  }
   .field input{ height:44px; padding:8px 12px; line-height:1.15; }
-  .row .field input{ height:44px; }
-  .field textarea{ min-height:64px; padding:10px 12px; line-height:1.15; resize:vertical; }
-
   .row{ display:grid; grid-template-columns:1fr 180px; gap:10px }
+  .row .field input{ height:44px }
+  .field textarea{ min-height:64px; padding:10px 12px; line-height:1.15; resize:vertical }
 
-  .actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:8px }
+  .actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:auto } /* empuja botones al fondo */
   button{ appearance:none; border:0; background:var(--brand); color:#fff; padding:10px 14px; border-radius:10px; font-weight:800; cursor:pointer }
   button.secondary{ background:#e2e8f0; color:#0f172a }
 
   /* -------- PREVIEW 10×15 -------- */
-  .preview-wrap{ display:flex; justify-content:center; align-items:flex-start; padding:16px }
+  .preview-card .card-body{ padding:16px; }
+  .preview-wrap{
+    flex:1;                          /* ocupa toda la altura disponible */
+    display:flex; justify-content:center; align-items:center;
+    padding:8px;
+  }
   .preview{ width:100mm; height:150mm; background:#fff; color:#000; position:relative; border:1px solid #d1d5db }
 
   .label{
@@ -58,7 +78,6 @@
     font-size:12px; line-height:1.12;
     white-space:pre-wrap; word-wrap:break-word;
   }
-
   .row2{ display:grid; grid-template-columns: 1fr 30mm; gap:3mm; align-items:start }
   .cp .box{ font-weight:900; font-size:15px; text-align:left }
   .obs .box{ min-height:16mm }
@@ -75,13 +94,13 @@
 </style>
 </head>
 <body>
-  <header class="card printable">
-    <h1>Generador de Etiquetas (10×15 cm) • GoSpin</h1>
+  <header class="card printable" style="height:auto">
+    <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.3.2)</h1>
   </header>
 
   <main>
-    <!-- PANEL DE CARGA (ayudas entre paréntesis SOLO aquí) -->
-    <section class="card printable">
+    <!-- PANEL DE CARGA -->
+    <section class="card form-card printable">
       <div class="card-body">
         <div class="field">
           <label>REMITENTE</label>
@@ -114,54 +133,56 @@
           <button id="btn-pdf">Descargar PDF</button>
           <button id="btn-clear" class="secondary">Nueva etiqueta</button>
         </div>
-        <p style="font-size:12px; color:#475569; margin-top:10px">
+        <p style="font-size:12px; color:#475569; margin:6px 0 0">
           CP validado: sólo números y exactamente 4 dígitos. Los datos no se envían a ningún servidor.
         </p>
       </div>
     </section>
 
-    <!-- VISTA PREVIA (lo que se imprime) -->
-    <section class="card">
-      <div class="preview-wrap">
-        <div class="preview" id="preview">
-          <div class="label" id="label">
-            <div class="brand-row">
-              <div class="brand-title">Etiqueta de Envío • GoSpin</div>
-              <img src="gospinlogo.png" alt="GoSpin" class="brand-logo" />
-            </div>
-
-            <div class="fieldbox remitente">
-              <div class="flabel">REMITENTE</div>
-              <div class="box" id="v-remitente"></div>
-            </div>
-
-            <div class="fieldbox nombre">
-              <div class="flabel">NOMBRE COMPLETO DE QUIEN RECIBE</div>
-              <div class="box" id="v-nombre"></div>
-            </div>
-
-            <div class="fieldbox domicilio">
-              <div class="flabel">DOMICILIO</div>
-              <div class="box" id="v-domicilio"></div>
-            </div>
-
-            <div class="row2">
-              <div class="fieldbox loc">
-                <div class="flabel">LOCALIDAD</div>
-                <div class="box" id="v-localidad"></div>
+    <!-- VISTA PREVIA -->
+    <section class="card preview-card">
+      <div class="card-body">
+        <div class="preview-wrap">
+          <div class="preview" id="preview">
+            <div class="label" id="label">
+              <div class="brand-row">
+                <div class="brand-title">Etiqueta de Envío • GoSpin</div>
+                <img src="gospinlogo.png" alt="GoSpin" class="brand-logo" />
               </div>
-              <div class="fieldbox cp">
-                <div class="flabel">CÓDIGO POSTAL</div>
-                <div class="box" id="v-cp"></div>
+
+              <div class="fieldbox remitente">
+                <div class="flabel">REMITENTE</div>
+                <div class="box" id="v-remitente"></div>
               </div>
-            </div>
 
-            <div class="fieldbox obs">
-              <div class="flabel">OBSERVACIONES</div>
-              <div class="box" id="v-obs"></div>
-            </div>
+              <div class="fieldbox nombre">
+                <div class="flabel">NOMBRE COMPLETO DE QUIEN RECIBE</div>
+                <div class="box" id="v-nombre"></div>
+              </div>
 
-            <div class="website">WWW.GOSPIN.COM.AR</div>
+              <div class="fieldbox domicilio">
+                <div class="flabel">DOMICILIO</div>
+                <div class="box" id="v-domicilio"></div>
+              </div>
+
+              <div class="row2">
+                <div class="fieldbox loc">
+                  <div class="flabel">LOCALIDAD</div>
+                  <div class="box" id="v-localidad"></div>
+                </div>
+                <div class="fieldbox cp">
+                  <div class="flabel">CÓDIGO POSTAL</div>
+                  <div class="box" id="v-cp"></div>
+                </div>
+              </div>
+
+              <div class="fieldbox obs">
+                <div class="flabel">OBSERVACIONES</div>
+                <div class="box" id="v-obs"></div>
+              </div>
+
+              <div class="website">WWW.GOSPIN.COM.AR</div>
+            </div>
           </div>
         </div>
       </div>
@@ -172,14 +193,13 @@
   function $(id){ return document.getElementById(id); }
   function getVal(id){ return ($(id).value || '').trim(); }
 
-  // CP: sólo números (máx 4)
   $('f-cp').addEventListener('input', (e)=>{
     e.target.value = e.target.value.replace(/[^0-9]/g,'').slice(0,4);
   });
 
   function validateCP(){
     const cp = getVal('f-cp');
-    const ok = /^\d{4}$/.test(cp);
+    const ok = /^\\d{4}$/.test(cp);
     $('f-cp').style.borderColor = ok ? '#cfd3d7' : '#ef4444';
     return ok;
   }
@@ -198,7 +218,6 @@
     $(id).addEventListener('input', sync);
   });
 
-  // Descargar PDF
   async function descargarPDF(){
     if(!validateCP()){ alert('El Código Postal debe tener 4 números.'); return; }
     sync();
@@ -208,13 +227,12 @@
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation:'p', unit:'mm', format:[100,150] });
     pdf.addImage(imgData, 'PNG', 0, 0, 100, 150);
-    const nombre = getVal('f-nombre').replace(/[^A-Za-z0-9_\-]+/g,'_') || 'etiqueta';
+    const nombre = getVal('f-nombre').replace(/[^A-Za-z0-9_\\-]+/g,'_') || 'etiqueta';
     const cp = getVal('f-cp') || '0000';
     pdf.save(`etiqueta_gospin_${cp}_${nombre}.pdf`);
   }
   $('btn-pdf').addEventListener('click', descargarPDF);
 
-  // Nueva etiqueta (limpiar)
   $('btn-clear').addEventListener('click', ()=>{
     ['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-obs'].forEach(id=>{
       $(id).value = '';
@@ -223,7 +241,6 @@
     $('f-remitente').focus();
   });
 
-  // Inicial
   sync();
 </script>
 </body>
