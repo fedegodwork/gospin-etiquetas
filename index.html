@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Generador de Etiquetas • GoSpin</title>
 
+<!-- Exportación a PDF -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
@@ -33,32 +34,30 @@
   .preview-wrap{ display:flex; justify-content:center; align-items:flex-start; padding:16px }
   .preview{ width:100mm; height:150mm; background:#fff; color:#000; position:relative; border:1px solid #d1d5db }
 
-  /* Etiqueta (ajustes para que no desborde) */
+  /* Etiqueta */
   .label{
     position:absolute; inset:8mm;
-    border:1.6px solid #000; padding:5mm;      /* ↓ padding */
-    display:flex; flex-direction:column; gap:3.2mm;  /* ↓ separación */
+    border:1.6px solid #000; padding:5mm;
+    display:flex; flex-direction:column; gap:3.2mm;
   }
   .brand-row{ display:grid; grid-template-columns:1fr auto; align-items:center }
   .brand-title{ font-weight:900; font-size:12px; letter-spacing:.2px }
-  .brand-logo{ width:23mm; height:auto; object-fit:contain }  /* ↓ logo */
+  .brand-logo{ width:23mm; height:auto; object-fit:contain }
 
   .fieldbox{ display:flex; flex-direction:column; gap:1mm }
-  .flabel{ font-size:9.2px; font-weight:900 }  /* ↓ tamaño etiqueta */
+  .flabel{ font-size:9.2px; font-weight:900 }
   .box{
     border:1px solid #000;
-    padding:2.8mm;          /* ↓ padding */
-    min-height:11mm;        /* ↓ altura mínima de cada campo */
+    padding:2.8mm;
+    min-height:11mm;
     font-size:12px; line-height:1.12;
     white-space:pre-wrap; word-wrap:break-word;
   }
 
-  /* Localidad / CP bien alineados */
-  .row2{ display:grid; grid-template-columns: 1fr 30mm; gap:3mm; align-items:start } /* ↓ ancho CP */
+  .row2{ display:grid; grid-template-columns: 1fr 30mm; gap:3mm; align-items:start }
   .cp .box{ font-weight:900; font-size:15px; text-align:left }
 
-  /* Observaciones más chico para que no toque el borde inferior */
-  .obs .box{ min-height:16mm }  /* ↓ aún más */
+  .obs .box{ min-height:16mm }
 
   .website{ text-align:center; font-weight:900; font-size:11px; margin-top:auto }
 
@@ -68,7 +67,7 @@
     header, .card:not(.printable), .preview-wrap { display:none !important }
     body{ background:#fff }
     .preview{ border:0 }
-    .label{ inset:0; border:0; padding:6.5mm }  /* ↓ padding en impresión */
+    .label{ inset:0; border:0; padding:6.5mm }
   }
 </style>
 </head>
@@ -78,7 +77,7 @@
   </header>
 
   <main>
-    <!-- PANEL DE CARGA: las ayudas entre paréntesis solo van AQUÍ -->
+    <!-- PANEL DE CARGA -->
     <section class="card printable">
       <div class="card-body">
         <div class="field">
@@ -111,6 +110,7 @@
         <div class="actions">
           <button id="btn-preview">Actualizar vista</button>
           <button id="btn-pdf">Descargar PDF</button>
+          <button id="btn-clear" class="secondary">Nueva etiqueta</button>
           <button class="secondary" onclick="window.print()">Imprimir / Guardar PDF (del navegador)</button>
         </div>
         <p style="font-size:12px; color:#475569; margin-top:10px">
@@ -129,7 +129,6 @@
               <img src="gospinlogo.png" alt="GoSpin" class="brand-logo" />
             </div>
 
-            <!-- En la etiqueta: SOLO TITULOS (sin paréntesis) -->
             <div class="fieldbox remitente">
               <div class="flabel">REMITENTE</div>
               <div class="box" id="v-remitente"></div>
@@ -199,6 +198,7 @@
   });
   $('btn-preview').addEventListener('click', sync);
 
+  // Descargar PDF
   async function descargarPDF(){
     if(!validateCP()){ alert('El Código Postal debe tener 4 números.'); return; }
     sync();
@@ -213,6 +213,15 @@
     pdf.save(`etiqueta_gospin_${cp}_${nombre}.pdf`);
   }
   $('btn-pdf').addEventListener('click', descargarPDF);
+
+  // Nueva etiqueta (limpiar)
+  $('btn-clear').addEventListener('click', ()=>{
+    ['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-obs'].forEach(id=>{
+      $(id).value = '';
+    });
+    sync();
+    $('f-remitente').focus();
+  });
 
   // Inicial
   sync();
