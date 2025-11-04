@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-<title>Generador de Etiquetas • GoSpin (v1.5.5)</title>
+<title>Generador de Etiquetas • GoSpin (v1.6)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -13,137 +13,117 @@
   *{ box-sizing:border-box }
   html{ -webkit-text-size-adjust:100%; }
   html, body{ overflow-x:hidden; }
-  /* 🔄 Fondo general blanco para evitar grises asimétricos */
   body{
     font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif;
     margin:0; background:#fff; color:var(--ink);
   }
 
-  /* Contenedor de página para alinear header y contenido */
   .page{
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
   }
-  @media (max-width: 980px){
-    .page{ padding: 0 12px; }
-  }
+  @media (max-width: 980px){ .page{ padding: 0 12px; } }
 
-  header{
-    background:#fff; border-bottom:1px solid #e6e8eb;
-  }
-  header .page{
-    display:flex; align-items:center; gap:14px; padding:16px 20px;
-  }
+  header{ background:#fff; border-bottom:1px solid #e6e8eb; }
+  header .page{ display:flex; align-items:center; gap:14px; padding:16px 20px; }
   header h1{ font-size:18px; margin:0; font-weight:800 }
   @media (max-width: 980px){
     header .page{ padding:12px; }
     header h1{ font-size:16px; }
   }
 
-  /* GRID */
   main .page{
     padding-top:20px; padding-bottom:20px;
     display:grid; grid-template-columns: 420px 1fr;
     gap:20px; align-items:stretch; min-height: calc(100vh - 80px);
   }
   @media (max-width: 980px){
-    main .page{
-      grid-template-columns:1fr;
-      min-height:auto; padding-top:12px; padding-bottom:12px; gap:12px;
-    }
+    main .page{ grid-template-columns:1fr; min-height:auto; padding-top:12px; padding-bottom:12px; gap:12px; }
   }
 
   .card{
-    background:#fff; border:1px solid #e6e8eb; border-radius:14px; box-shadow:0 10px 20px rgba(0,0,0,.04);
-    height:100%; display:flex; flex-direction:column;
+    background:#fff; border:1px solid #e6e8eb; border-radius:14px;
+    box-shadow:0 10px 20px rgba(0,0,0,.04); height:100%;
+    display:flex; flex-direction:column;
   }
   .card .card-body{ padding:18px; display:flex; flex-direction:column; gap:12px; flex:1 }
 
-  /* -------- FORM -------- */
   .field label{ display:block; font-size:12px; font-weight:800; margin-bottom:6px }
   .field input,.field textarea{
-    width:100%; border:1px solid #cfd3d7; border-radius:10px; font-size:14px; background:#fff;
+    width:100%; border:1px solid #cfd3d7; border-radius:10px;
+    font-size:14px; background:#fff;
   }
   .field input{ height:44px; padding:8px 12px; line-height:1.15 }
   .row{ display:grid; grid-template-columns:1fr 180px; gap:10px }
-  .row .field input{ height:44px }
   .field textarea{ min-height:64px; padding:10px 12px; line-height:1.15; resize:vertical }
 
-  /* Evitar zoom automático en móvil */
-  @media (max-width: 980px){
-    .field input, .field textarea{ font-size:16px; }
-  }
+  @media (max-width: 980px){ .field input, .field textarea{ font-size:16px; } }
 
-  .actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:auto }
-  button{ appearance:none; border:0; background:var(--brand); color:#fff; padding:10px 14px; border-radius:10px; font-weight:800; cursor:pointer }
+  .actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:auto; }
+  button{ appearance:none; border:0; background:var(--brand); color:#fff;
+    padding:10px 14px; border-radius:10px; font-weight:800; cursor:pointer }
   button.secondary{ background:#e2e8f0; color:#0f172a }
 
-  /* ====== BARRA FIJA EN CELULAR ====== */
   @media (max-width: 980px){
     body{ padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); }
     .actions{
-      position: fixed;
-      left: 12px; right: 12px;
+      position: fixed; left: 12px; right: 12px;
       bottom: calc(28px + env(safe-area-inset-bottom, 0px));
-      background: #fff;
-      padding: 12px;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      box-shadow: 0 6px 24px rgba(0,0,0,0.10);
-      justify-content: center;
-      z-index: 999;
+      background:#fff; padding:12px;
+      border:1px solid #e5e7eb; border-radius:12px;
+      box-shadow:0 6px 24px rgba(0,0,0,0.10);
+      justify-content:center; z-index:999;
     }
-    .actions button{ flex:1; max-width:200px }
+    .actions button{ flex:1; max-width:200px; }
   }
 
-  /* -------- PREVIEW 10×15 -------- */
   .preview-card .card-body{ padding:16px }
   .preview-wrap{
-    flex:1; display:flex; justify-content:center; align-items:center; padding:8px; overflow:hidden;
+    flex:1; display:flex; justify-content:center; align-items:center;
+    padding:8px; overflow:hidden;
   }
   .preview{
     width:100mm; height:150mm;
-    background:#fff; color:#000; position:relative; border:1px solid #d1d5db;
-    transform-origin: top center;
+    background:#fff; color:#000; position:relative;
+    border:1px solid #d1d5db; transform-origin:top center;
   }
   .label{
     position:absolute; inset:8mm;
     border:1.6px solid #000; padding:5mm;
     display:flex; flex-direction:column; gap:3.2mm;
   }
-  .brand-row{ display:grid; grid-template-columns:1fr auto; align-items:center }
-  .brand-title{ font-weight:900; font-size:12px; letter-spacing:.2px }
-  .brand-logo{ width:23mm; height:auto; object-fit:contain }
+  .brand-row{ display:grid; grid-template-columns:1fr auto; align-items:center; }
+  .brand-title{ font-weight:900; font-size:12px; letter-spacing:.2px; }
+  .brand-logo{ width:23mm; height:auto; object-fit:contain; }
 
-  .fieldbox{ display:flex; flex-direction:column; gap:1mm }
-  .flabel{ font-size:9.2px; font-weight:900 }
+  .fieldbox{ display:flex; flex-direction:column; gap:1mm; }
+  .flabel{ font-size:9.2px; font-weight:900; }
   .box{
     border:1px solid #000; padding:2.8mm; min-height:11mm;
     font-size:12px; line-height:1.12; white-space:pre-wrap; word-wrap:break-word;
   }
-  .row2{ display:grid; grid-template-columns: 1fr 30mm; gap:3mm; align-items:start }
+  .row2{ display:grid; grid-template-columns: 1fr 30mm; gap:3mm; align-items:start; }
 
-  /* CP sin negrita (igual que el resto) */
   .cp .box{ font-size:15px; text-align:left; font-weight:400; }
+  .cel .box{ font-size:12px; text-align:left; font-weight:400; }
+  .obs .box{ min-height:16mm; }
 
-  .obs .box{ min-height:16mm }
-  .website{ text-align:center; font-weight:900; font-size:11px; margin-top:auto }
+  .website{ text-align:center; font-weight:900; font-size:11px; margin-top:auto; }
 
-  /* PRINT */
   @page{ size: 100mm 150mm; margin: 0 }
   @media print{
     header, .card:not(.printable), .preview-wrap { display:none !important }
-    body{ background:#fff !important; padding-bottom:0 !important }
-    .preview{ border:0; transform:none !important }
-    .label{ inset:0; border:0; padding:6.5mm }
+    body{ background:#fff !important; padding-bottom:0 !important; }
+    .preview{ border:0; transform:none !important; }
+    .label{ inset:0; border:0; padding:6.5mm; }
   }
 </style>
 </head>
 <body>
   <header>
     <div class="page">
-      <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.5.5)</h1>
+      <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.6)</h1>
     </div>
   </header>
 
@@ -175,6 +155,10 @@
             </div>
           </div>
           <div class="field">
+            <label>CELULAR</label>
+            <input id="f-cel" inputmode="numeric" maxlength="15" placeholder="(Sólo números, sin + ni guiones)"/>
+          </div>
+          <div class="field">
             <label>OBSERVACIONES</label>
             <textarea id="f-obs" rows="3" maxlength="220" placeholder="(Frágil, horario de entrega, portería, etc.)"></textarea>
           </div>
@@ -184,7 +168,7 @@
             <button id="btn-clear" class="secondary">Nueva etiqueta</button>
           </div>
           <p style="font-size:12px; color:#475569; margin:6px 0 0">
-            CP validado: sólo números y exactamente 4 dígitos. Los datos no se envían a ningún servidor.
+            Los campos numéricos permiten sólo dígitos. Los datos no se envían a ningún servidor.
           </p>
         </div>
       </section>
@@ -222,6 +206,10 @@
                     <div class="box" id="v-cp"></div>
                   </div>
                 </div>
+                <div class="fieldbox cel">
+                  <div class="flabel">CELULAR</div>
+                  <div class="box" id="v-cel"></div>
+                </div>
                 <div class="fieldbox obs">
                   <div class="flabel">OBSERVACIONES</div>
                   <div class="box" id="v-obs"></div>
@@ -240,9 +228,11 @@
 function $(id){return document.getElementById(id);}
 function getVal(id){return ($(id).value||'').trim();}
 $('f-cp').addEventListener('input',e=>{e.target.value=e.target.value.replace(/[^0-9]/g,'').slice(0,4);});
+$('f-cel').addEventListener('input',e=>{e.target.value=e.target.value.replace(/[^0-9]/g,'').slice(0,15);});
+
 function validateCP(){const cp=getVal('f-cp');const ok=/^\d{4}$/.test(cp);$('f-cp').style.borderColor=ok?'#cfd3d7':'#ef4444';return ok;}
-function sync(){['remitente','nombre','domicilio','localidad','cp','obs'].forEach(x=>$('v-'+x).textContent=getVal('f-'+x));validateCP();}
-['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-obs'].forEach(id=>$(id).addEventListener('input',sync));
+function sync(){['remitente','nombre','domicilio','localidad','cp','cel','obs'].forEach(x=>$('v-'+x).textContent=getVal('f-'+x));validateCP();}
+['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-cel','f-obs'].forEach(id=>$(id).addEventListener('input',sync));
 
 function resizePreview(){
   const wrap=document.querySelector('.preview-wrap'); const pv=$('preview');
@@ -268,7 +258,7 @@ async function descargarPDF(){
 $('btn-pdf').addEventListener('click',descargarPDF);
 
 $('btn-clear').addEventListener('click',()=>{
-  ['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-obs'].forEach(id=>$(id).value='');
+  ['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-cel','f-obs'].forEach(id=>$(id).value='');
   sync(); $('f-remitente').focus();
 });
 
