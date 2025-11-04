@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Generador de Etiquetas • GoSpin (v1.5.2)</title>
+<title>Generador de Etiquetas • GoSpin (v1.5.3)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -11,23 +11,42 @@
 <style>
   :root{ --ink:#0f172a; --muted:#64748b; --brand:#0ea5e9; }
   *{ box-sizing:border-box }
+  html{ -webkit-text-size-adjust:100%; }
   body{ font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif; margin:0; background:#f6f7f9; color:var(--ink) }
 
-  header{ display:flex; align-items:center; gap:14px; padding:16px 20px; background:#fff; border-bottom:1px solid #e6e8eb }
-  header h1{ font-size:18px; margin:0; font-weight:800 }
-
-  /* GRID */
-  main{
-    display:grid;
-    grid-template-columns: 420px 1fr;
-    gap:20px;
-    padding:20px;
-    align-items:stretch;
-    min-height: calc(100vh - 80px);
+  /* Contenedor de página para alinear header y contenido */
+  .page{
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;     /* mismo padding lateral para header y main */
   }
   @media (max-width: 980px){
-    main{ grid-template-columns:1fr; min-height:auto; padding:12px; gap:12px; }
-    header h1{ font-size:16px }
+    .page{ padding: 0 12px; }
+  }
+
+  header{
+    background:#fff; border-bottom:1px solid #e6e8eb;
+  }
+  header .page{
+    display:flex; align-items:center; gap:14px; padding:16px 20px;
+  }
+  header h1{ font-size:18px; margin:0; font-weight:800 }
+  @media (max-width: 980px){
+    header .page{ padding:12px; }
+    header h1{ font-size:16px; }
+  }
+
+  /* GRID */
+  main .page{
+    padding-top:20px; padding-bottom:20px;
+    display:grid; grid-template-columns: 420px 1fr;
+    gap:20px; align-items:stretch; min-height: calc(100vh - 80px);
+  }
+  @media (max-width: 980px){
+    main .page{
+      grid-template-columns:1fr;
+      min-height:auto; padding-top:12px; padding-bottom:12px; gap:12px;
+    }
   }
 
   .card{
@@ -46,21 +65,24 @@
   .row .field input{ height:44px }
   .field textarea{ min-height:64px; padding:10px 12px; line-height:1.15; resize:vertical }
 
-  .actions{
-    display:flex; flex-wrap:wrap; gap:10px; margin-top:auto;
+  /* En móvil, evitar zoom por foco en inputs (iOS/Android) */
+  @media (max-width: 980px){
+    .field input, .field textarea{ font-size:16px; }
   }
+
+  .actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:auto }
   button{ appearance:none; border:0; background:var(--brand); color:#fff; padding:10px 14px; border-radius:10px; font-weight:800; cursor:pointer }
   button.secondary{ background:#e2e8f0; color:#0f172a }
 
-  /* ====== BARRA FIJA EN CELULAR (levantada para no quedar bajo la barra del browser) ====== */
+  /* ====== BARRA FIJA EN CELULAR (visible desde el inicio) ====== */
   @media (max-width: 980px){
-    body{ padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)); } /* reserva espacio por si hay scroll */
+    /* Reservo espacio para que la barra NO quede fuera de pantalla */
+    body{ padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); }
 
     .actions{
       position: fixed;
       left: 12px; right: 12px;
-      /* levantamos 12px del borde + safe-area (evita solaparse con la barra del navegador) */
-      bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+      bottom: calc(28px + env(safe-area-inset-bottom, 0px)); /* la levanto más para no quedar bajo la barra del browser */
       background: #fff;
       padding: 12px;
       border: 1px solid #e5e7eb;
@@ -113,94 +135,99 @@
 </style>
 </head>
 <body>
-  <header class="card printable" style="height:auto">
-    <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.5.2)</h1>
+  <header>
+    <div class="page">
+      <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.5.3)</h1>
+    </div>
   </header>
 
   <main>
-    <!-- FORMULARIO -->
-    <section class="card form-card printable">
-      <div class="card-body">
-        <div class="field">
-          <label>REMITENTE</label>
-          <input id="f-remitente" maxlength="64" placeholder="(Ingresar únicamente nombre de comercio)"/>
-        </div>
-        <div class="field">
-          <label>NOMBRE COMPLETO DE QUIEN RECIBE</label>
-          <input id="f-nombre" maxlength="64" placeholder="(Nombre y Apellido)"/>
-        </div>
-        <div class="field">
-          <label>DOMICILIO</label>
-          <input id="f-domicilio" maxlength="90" placeholder="(Calle, Número, Piso/Departamento)"/>
-        </div>
-        <div class="row">
+    <div class="page">
+      <!-- FORMULARIO -->
+      <section class="card form-card printable">
+        <div class="card-body">
           <div class="field">
-            <label>LOCALIDAD</label>
-            <input id="f-localidad" maxlength="48" placeholder="(Ciudad/Localidad)"/>
+            <label>REMITENTE</label>
+            <input id="f-remitente" maxlength="64" placeholder="(Ingresar únicamente nombre de comercio)"/>
           </div>
           <div class="field">
-            <label>CÓDIGO POSTAL</label>
-            <input id="f-cp" inputmode="numeric" maxlength="4" placeholder="(4 dígitos, ej. 1602)"/>
+            <label>NOMBRE COMPLETO DE QUIEN RECIBE</label>
+            <input id="f-nombre" maxlength="64" placeholder="(Nombre y Apellido)"/>
           </div>
-        </div>
-        <div class="field">
-          <label>OBSERVACIONES</label>
-          <textarea id="f-obs" rows="3" maxlength="220" placeholder="(Frágil, horario de entrega, portería, etc.)"></textarea>
-        </div>
+          <div class="field">
+            <label>DOMICILIO</label>
+            <input id="f-domicilio" maxlength="90" placeholder="(Calle, Número, Piso/Departamento)"/>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label>LOCALIDAD</label>
+              <input id="f-localidad" maxlength="48" placeholder="(Ciudad/Localidad)"/>
+            </div>
+            <div class="field">
+              <label>CÓDIGO POSTAL</label>
+              <input id="f-cp" inputmode="numeric" maxlength="4" placeholder="(4 dígitos, ej. 1602)"/>
+            </div>
+          </div>
+          <div class="field">
+            <label>OBSERVACIONES</label>
+            <textarea id="f-obs" rows="3" maxlength="220" placeholder="(Frágil, horario de entrega, portería, etc.)"></textarea>
+          </div>
 
-        <div class="actions">
-          <button id="btn-pdf">Descargar PDF</button>
-          <button id="btn-clear" class="secondary">Nueva etiqueta</button>
+          <div class="actions">
+            <button id="btn-pdf">Descargar PDF</button>
+            <button id="btn-clear" class="secondary">Nueva etiqueta</button>
+          </div>
+          <p style="font-size:12px; color:#475569; margin:6px 0 0">
+            CP validado: sólo números y exactamente 4 dígitos. Los datos no se envían a ningún servidor.
+          </p>
         </div>
-        <p style="font-size:12px; color:#475569; margin:6px 0 0">
-          CP validado: sólo números y exactamente 4 dígitos. Los datos no se envían a ningún servidor.
-        </p>
-      </div>
-    </section>
+      </section>
 
-    <!-- PREVIEW -->
-    <section class="card preview-card">
-      <div class="card-body">
-        <div class="preview-wrap">
-          <div class="preview" id="preview">
-            <div class="label" id="label">
-              <div class="brand-row">
-                <div class="brand-title">Etiqueta de Envío • GoSpin</div>
-                <img src="gospinlogo.png" alt="GoSpin" class="brand-logo" />
-              </div>
-
-              <div class="fieldbox remitente">
-                <div class="flabel">REMITENTE</div>
-                <div class="box" id="v-remitente"></div>
-              </div>
-              <div class="fieldbox nombre">
-                <div class="flabel">NOMBRE COMPLETO DE QUIEN RECIBE</div>
-                <div class="box" id="v-nombre"></div>
-              </div>
-              <div class="fieldbox domicilio">
-                <div class="flabel">DOMICILIO</div>
-                <div class="box" id="v-domicilio"></div>
-              </div>
-              <div class="row2">
-                <div class="fieldbox loc">
-                  <div class="flabel">LOCALIDAD</div>
-                  <div class="box" id="v-localidad"></div>
+      <!-- PREVIEW -->
+      <section class="card preview-card">
+        <div class="card-body">
+          <div class="preview-wrap">
+            <div class="preview" id="preview">
+              <div class="label" id="label">
+                <div class="brand-row">
+                  <div class="brand-title">Etiqueta de Envío • GoSpin</div>
+                  <img src="gospinlogo.png" alt="GoSpin" class="brand-logo" />
                 </div>
-                <div class="fieldbox cp">
-                  <div class="flabel">CÓDIGO POSTAL</div>
-                  <div class="box" id="v-cp"></div>
+
+                <div class="fieldbox remitente">
+                  <div class="flabel">REMITENTE</div>
+                  <div class="box" id="v-remitente"></div>
                 </div>
+                <div class="fieldbox nombre">
+                  <div class="flabel">NOMBRE COMPLETO DE QUIEN RECIBE</div>
+                  <div class="box" id="v-nombre"></div>
+                </div>
+                <div class="fieldbox domicilio">
+                  <div class="flabel">DOMICILIO</div>
+                  <div class="box" id="v-domicilio"></div>
+                </div>
+                <div class="row2">
+                  <div class="fieldbox loc">
+                    <div class="flabel">LOCALIDAD</div>
+                    <div class="box" id="v-localidad"></div>
+                  </div>
+                  <div class="fieldbox cp">
+                    <div class="flabel">CÓDIGO POSTAL</div>
+                    <div class="box" id="v-cp"></div>
+                  </div>
+                </div>
+                <div class="fieldbox obs">
+                  <div class="flabel">OBSERVACIONES</div>
+                  <div class="box" id="v-obs"></div>
+                </div>
+                <div class="website">WWW.GOSPIN.COM.AR</div>
               </div>
-              <div class="fieldbox obs">
-                <div class="flabel">OBSERVACIONES</div>
-                <div class="box" id="v-obs"></div>
-              </div>
-              <div class="website">WWW.GOSPIN.COM.AR</div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+    </div>
   </main>
 
 <script>
@@ -210,12 +237,36 @@ $('f-cp').addEventListener('input',e=>{e.target.value=e.target.value.replace(/[^
 function validateCP(){const cp=getVal('f-cp');const ok=/^\d{4}$/.test(cp);$('f-cp').style.borderColor=ok?'#cfd3d7':'#ef4444';return ok;}
 function sync(){['remitente','nombre','domicilio','localidad','cp','obs'].forEach(x=>$('v-'+x).textContent=getVal('f-'+x));validateCP();}
 ['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-obs'].forEach(id=>$(id).addEventListener('input',sync));
-function resizePreview(){const wrap=document.querySelector('.preview-wrap');const pv=$('preview');if(!wrap||!pv)return;const real=pv.offsetWidth;const avail=wrap.clientWidth-8;pv.style.transform=avail<real?`scale(${avail/real})`:'scale(1)';}
+
+function resizePreview(){
+  const wrap=document.querySelector('.preview-wrap'); const pv=$('preview');
+  if(!wrap||!pv) return;
+  const real=pv.offsetWidth; const avail=wrap.clientWidth-8;
+  pv.style.transform=avail<real?`scale(${avail/real})`:'scale(1)';
+}
 window.addEventListener('resize',resizePreview);
-async function descargarPDF(){if(!validateCP()){alert('El Código Postal debe tener 4 números.');return;}sync();const pv=$('preview');const prev=pv.style.transform;pv.style.transform='none';const canvas=await html2canvas(pv,{scale:2,backgroundColor:'#fff'});const img=canvas.toDataURL('image/png');const{jsPDF}=window.jspdf;const pdf=new jsPDF({orientation:'p',unit:'mm',format:[100,150]});pdf.addImage(img,'PNG',0,0,100,150);const nombre=getVal('f-nombre').replace(/[^A-Za-z0-9_\\-]+/g,'_')||'etiqueta';const cp=getVal('f-cp')||'0000';pdf.save(`etiqueta_gospin_${cp}_${nombre}.pdf`);pv.style.transform=prev;resizePreview();}
+
+async function descargarPDF(){
+  if(!validateCP()){ alert('El Código Postal debe tener 4 números.'); return; }
+  sync();
+  const pv=$('preview'); const prev=pv.style.transform; pv.style.transform='none';
+  const canvas=await html2canvas(pv,{scale:2,backgroundColor:'#fff'});
+  const img=canvas.toDataURL('image/png'); const{jsPDF}=window.jspdf;
+  const pdf=new jsPDF({orientation:'p',unit:'mm',format:[100,150]});
+  pdf.addImage(img,'PNG',0,0,100,150);
+  const nombre=getVal('f-nombre').replace(/[^A-Za-z0-9_\\-]+/g,'_')||'etiqueta';
+  const cp=getVal('f-cp')||'0000';
+  pdf.save(`etiqueta_gospin_${cp}_${nombre}.pdf`);
+  pv.style.transform=prev; resizePreview();
+}
 $('btn-pdf').addEventListener('click',descargarPDF);
-$('btn-clear').addEventListener('click',()=>{['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-obs'].forEach(id=>$(id).value='');sync();$('f-remitente').focus();});
-sync();resizePreview();
+
+$('btn-clear').addEventListener('click',()=>{
+  ['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-obs'].forEach(id=>$(id).value='');
+  sync(); $('f-remitente').focus();
+});
+
+sync(); resizePreview();
 </script>
 </body>
 </html>
