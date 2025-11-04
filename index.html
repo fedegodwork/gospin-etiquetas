@@ -29,28 +29,23 @@
   button{ appearance:none; border:0; background:var(--brand); color:#fff; padding:10px 14px; border-radius:10px; font-weight:800; cursor:pointer }
   button.secondary{ background:#e2e8f0; color:#0f172a }
 
+  /* --- Coincidencia visual entre formulario y etiqueta --- */
+  .field input{ height:44px; padding:8px 12px; line-height:1.15; }
+  .field textarea{ min-height:64px; padding:10px 12px; line-height:1.15; resize:vertical; }
+  .row .field input{ height:44px; }
+
   /* Vista previa exacta 10x15 cm */
   .preview-wrap{ display:flex; justify-content:center; align-items:flex-start; padding:16px }
   .preview{ width:100mm; height:150mm; background:#fff; color:#000; position:relative; border:1px solid #d1d5db }
 
-  .label{
-    position:absolute; inset:8mm;
-    border:1.6px solid #000; padding:5mm;
-    display:flex; flex-direction:column; gap:3.2mm;
-  }
+  .label{ position:absolute; inset:8mm; border:1.6px solid #000; padding:5mm; display:flex; flex-direction:column; gap:3.2mm; }
   .brand-row{ display:grid; grid-template-columns:1fr auto; align-items:center }
   .brand-title{ font-weight:900; font-size:12px; letter-spacing:.2px }
   .brand-logo{ width:23mm; height:auto; object-fit:contain }
 
   .fieldbox{ display:flex; flex-direction:column; gap:1mm }
   .flabel{ font-size:9.2px; font-weight:900 }
-  .box{
-    border:1px solid #000;
-    padding:2.8mm;
-    min-height:11mm;
-    font-size:12px; line-height:1.12;
-    white-space:pre-wrap; word-wrap:break-word;
-  }
+  .box{ border:1px solid #000; padding:2.8mm; min-height:11mm; font-size:12px; line-height:1.12; white-space:pre-wrap; word-wrap:break-word; }
 
   .row2{ display:grid; grid-template-columns: 1fr 30mm; gap:3mm; align-items:start }
   .cp .box{ font-weight:900; font-size:15px; text-align:left }
