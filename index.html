@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-<title>Generador de Etiquetas • GoSpin (v1.8.1)</title>
+<title>Generador de Etiquetas • GoSpin (v1.8.2)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
 <style>
-  :root{ --ink:#0f172a; --muted:#64748b; --brand:#0ea5e9; --danger:#b91c1c; --danger-bg:#ffeaea; }
+  :root{ --ink:#0f172a; --muted:#64748b; --brand:#0ea5e9; --danger:#b91c1c; --danger-bg:#ffeaea; --border:#e6e8eb; }
   *{ box-sizing:border-box }
   html{ -webkit-text-size-adjust:100%; }
   html, body{ overflow-x:hidden; }
@@ -18,7 +18,7 @@
   .page{ max-width:1200px; margin:0 auto; padding:0 20px; }
   @media (max-width:980px){ .page{ padding:0 12px; } }
 
-  header{ background:#fff; border-bottom:1px solid #e6e8eb; }
+  header{ background:#fff; border-bottom:1px solid var(--border); }
   header .page{ display:flex; align-items:center; gap:14px; padding:16px 20px; }
   header h1{ font-size:18px; margin:0; font-weight:800 }
   @media (max-width:980px){ header .page{ padding:12px; } header h1{ font-size:16px; } }
@@ -32,18 +32,18 @@
     main .page{ grid-template-columns:1fr; min-height:auto; padding-top:12px; padding-bottom:12px; gap:12px; }
   }
 
-  .card{ background:#fff; border:1px solid #e6e8eb; border-radius:14px; box-shadow:0 10px 20px rgba(0,0,0,.04); height:100%; display:flex; flex-direction:column; }
+  .card{ background:#fff; border:1px solid var(--border); border-radius:14px; box-shadow:0 10px 20px rgba(0,0,0,.04); height:100%; display:flex; flex-direction:column; }
   .card .card-body{ padding:18px; display:flex; flex-direction:column; gap:12px; flex:1 }
 
   /* -------- AVISO DE ERRORES -------- */
-  .alert{ display:none; background:var(--danger-bg); border:1px solid #fecaca; color:var(--danger); border-radius:10px; padding:12px 12px; font-size:14px; }
+  .alert{ display:none; background:var(--danger-bg); border:1px solid #fecaca; color:var(--danger); border-radius:10px; padding:12px; font-size:14px; }
   .alert-title{ font-weight:800; display:flex; align-items:center; gap:8px; margin:0 0 6px 0 }
   .alert ul{ margin:0; padding-left:18px }
   .alert svg{ width:18px; height:18px; flex:0 0 auto }
 
-  /* -------- FORMATO (arriba del todo) -------- */
+  /* -------- FORMATO (arriba) -------- */
   .options{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; font-size:13px; color:#475569; }
-  .options .group{ padding:10px; border:1px solid #e6e8eb; border-radius:10px; background:#fff; }
+  .options .group{ padding:10px; border:1px solid var(--border); border-radius:10px; background:#fff; }
   .options label{ display:inline-flex; align-items:center; gap:6px; margin-right:10px; cursor:pointer; }
 
   /* -------- FORM -------- */
@@ -69,13 +69,19 @@
     .actions button{ flex:1; max-width:200px }
   }
 
-  /* -------- PREVIEW (derecha) -------- */
-  .preview-card .card-body{ padding:16px; gap:10px }
-  .status{ font-size:13px; color:#475569; }
-  .preview-wrap{ display:flex; flex-direction:column; gap:10px; overflow:auto; }
+  /* -------- PREVIEW A4 (derecha) -------- */
+  .preview-card .card-body{ padding:16px; gap:12px }
+  .status{ font-size:13px; color:#475569; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .slots{ display:grid; grid-template-columns:1fr; gap:10px; }
 
-  /* Etiqueta (reutilizamos diseño) */
-  .label-preview{ width:95mm; height:142.5mm; background:#fff; color:#000; position:relative; border:1px solid #d1d5db; }
+  /* Etiqueta 95% para preview en A4 (vertical, una debajo de otra) */
+  .label-preview{ width:95mm; height:142.5mm; background:#fff; color:#000; position:relative; border:1px solid #d1d5db; border-radius:8px; cursor:pointer; }
+  .label-preview.active{ outline:3px solid #0ea5e9; }
+  .placeholder{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color:#94a3b8; font-size:13px; font-weight:700; user-select:none;
+  }
+
   .label-box{ position:absolute; inset:6.65mm; border:1.3px solid #000; padding:4.3mm; display:flex; flex-direction:column; gap:2.3mm }
   .brand-row{ display:grid; grid-template-columns:1fr auto; align-items:center }
   .brand-title{ font-weight:900; font-size:11.2px; letter-spacing:.2px }
@@ -90,18 +96,16 @@
   .obs .box{ min-height:12.8mm }
   .website{ text-align:center; font-weight:900; font-size:10.2px; margin-top:auto }
 
-  /* PRINT */
-  @page{ size:100mm 150mm; margin:0 } /* ignorado en PDFs generados */
-  @media print{
-    header, .card:not(.printable), .preview-wrap{ display:none !important }
-    body{ background:#fff !important; padding-bottom:0 !important }
-  }
+  /* PREVIEW térmica (individual) */
+  .single-wrap{ display:flex; }
+  .single{ width:100mm; height:150mm; background:#fff; color:#000; position:relative; border:1px solid #d1d5db; border-radius:8px; }
+  .single .label-box{ inset:7mm; border-width:1.4px; padding:4.5mm }
 </style>
 </head>
 <body>
   <header>
     <div class="page">
-      <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.8.1)</h1>
+      <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.8.2)</h1>
     </div>
   </header>
 
@@ -111,12 +115,12 @@
       <section class="card form-card printable">
         <div class="card-body">
 
-          <!-- Formato arriba del todo -->
+          <!-- Formato arriba de todo -->
           <div class="options">
             <div class="group">
               <strong style="font-size:12px; color:#0f172a; display:block; margin-bottom:6px;">Formato</strong>
-              <label><input type="radio" name="pdfsize" value="a4x4_95" checked> A4 · <b>4 por hoja</b> (95%, vertical)</label>
-              <label><input type="radio" name="pdfsize" value="10x15"> Térmica 10×15 (100%)</label>
+              <label><input type="radio" name="pdfsize" value="a4x4_95" checked> A4 · 4 etiquetas por hoja</label>
+              <label><input type="radio" name="pdfsize" value="10x15"> Térmica 10×15</label>
             </div>
           </div>
 
@@ -163,7 +167,7 @@
 
           <div class="actions">
             <button id="btn-pdf">Descargar PDF</button>
-            <button id="btn-clear" class="secondary">Nueva etiqueta</button>
+            <button id="btn-clear" class="secondary">Nueva hoja</button>
           </div>
           <p style="font-size:12px; color:#475569; margin:6px 0 0">
             Todos los campos son obligatorios salvo Observaciones. Los datos no se envían a ningún servidor.
@@ -174,31 +178,39 @@
       <!-- PANEL DERECHO -->
       <section class="card preview-card">
         <div class="card-body">
-          <div class="status">Etiquetas en esta hoja (A4): <b id="count">0</b> / 4</div>
-
-          <!-- Vista A4 (vertical): lista vertical de etiquetas añadidas -->
-          <div class="preview-wrap" id="a4-area">
-            <div id="labels-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+          <div class="status">
+            <span>Etiqueta activa: <b id="active-label">1</b> / 4</span>
+            <span>•</span>
+            <span>A4: se imprimen sólo las etiquetas completas.</span>
           </div>
 
-          <!-- Vista individual (térmica) -->
+          <!-- Vista A4 (lista vertical con 4 slots) -->
+          <div class="preview-wrap" id="a4-area">
+            <div id="slots" class="slots">
+              <!-- 4 slots se inyectan por JS -->
+            </div>
+          </div>
+
+          <!-- Vista Térmica (individual) -->
           <div class="preview-wrap" id="single-area" style="display:none">
-            <div class="label-preview" id="single-preview">
-              <div class="label-box">
-                <div class="brand-row">
-                  <div class="brand-title">Etiqueta de Envío • GoSpin</div>
-                  <img src="gospinlogo.png" alt="GoSpin" class="brand-logo" />
+            <div class="single-wrap">
+              <div class="single" id="single-preview">
+                <div class="label-box">
+                  <div class="brand-row">
+                    <div class="brand-title">Etiqueta de Envío • GoSpin</div>
+                    <img src="gospinlogo.png" alt="GoSpin" class="brand-logo" />
+                  </div>
+                  <div class="fieldbox remitente"><div class="flabel">REMITENTE</div><div class="box" id="v-remitente"></div></div>
+                  <div class="fieldbox nombre"><div class="flabel">NOMBRE COMPLETO DE QUIEN RECIBE</div><div class="box" id="v-nombre"></div></div>
+                  <div class="fieldbox domicilio"><div class="flabel">DOMICILIO</div><div class="box" id="v-domicilio"></div></div>
+                  <div class="row2">
+                    <div class="fieldbox loc"><div class="flabel">LOCALIDAD</div><div class="box" id="v-localidad"></div></div>
+                    <div class="fieldbox cp"><div class="flabel">CÓDIGO POSTAL</div><div class="box" id="v-cp"></div></div>
+                  </div>
+                  <div class="fieldbox cel"><div class="flabel">CELULAR</div><div class="box" id="v-cel"></div></div>
+                  <div class="fieldbox obs"><div class="flabel">OBSERVACIONES</div><div class="box" id="v-obs"></div></div>
+                  <div class="website">WWW.GOSPIN.COM.AR</div>
                 </div>
-                <div class="fieldbox remitente"><div class="flabel">REMITENTE</div><div class="box" id="v-remitente"></div></div>
-                <div class="fieldbox nombre"><div class="flabel">NOMBRE COMPLETO DE QUIEN RECIBE</div><div class="box" id="v-nombre"></div></div>
-                <div class="fieldbox domicilio"><div class="flabel">DOMICILIO</div><div class="box" id="v-domicilio"></div></div>
-                <div class="row2">
-                  <div class="fieldbox loc"><div class="flabel">LOCALIDAD</div><div class="box" id="v-localidad"></div></div>
-                  <div class="fieldbox cp"><div class="flabel">CÓDIGO POSTAL</div><div class="box" id="v-cp"></div></div>
-                </div>
-                <div class="fieldbox cel"><div class="flabel">CELULAR</div><div class="box" id="v-cel"></div></div>
-                <div class="fieldbox obs"><div class="flabel">OBSERVACIONES</div><div class="box" id="v-obs"></div></div>
-                <div class="website">WWW.GOSPIN.COM.AR</div>
               </div>
             </div>
           </div>
@@ -211,13 +223,33 @@
 
 <script>
 function $(id){return document.getElementById(id);}
+function q(sel){return document.querySelector(sel);}
+function qa(sel){return Array.from(document.querySelectorAll(sel));}
 function getVal(id){return ($(id).value||'').trim();}
 function setInvalid(id, on){ $(id).classList.toggle('invalid', !!on); }
 
-const MAX_PER_SHEET = 4;
-let labels = []; // etiquetas agregadas (A4)
+const MODE_A4 = 'a4x4_95';
+const MODE_TH = '10x15';
 
-function validateAll(){
+let activeIndex = 0; // 0..3
+const labels = [emptyData(), emptyData(), emptyData(), emptyData()];
+
+function emptyData(){
+  return { remitente:'', nombre:'', domicilio:'', localidad:'', cp:'', cel:'', obs:'' };
+}
+
+function validateData(d){
+  const missing = [];
+  if(!d.remitente) missing.push('Remitente');
+  if(!d.nombre)    missing.push('Nombre completo de quien recibe');
+  if(!d.domicilio) missing.push('Domicilio');
+  if(!d.localidad) missing.push('Localidad');
+  if(!/^\d{4}$/.test(d.cp)) missing.push('Código Postal (4 dígitos)');
+  if(!/^\d{1,15}$/.test(d.cel)) missing.push('Celular (sólo números, hasta 15 dígitos)');
+  return { ok: missing.length===0, missing };
+}
+
+function validateForm(){
   const missing = [];
   const order = ['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-cel'];
   order.forEach(id=>setInvalid(id,false));
@@ -225,10 +257,9 @@ function validateAll(){
   if(!getVal('f-nombre'))    missing.push('Nombre completo de quien recibe'), setInvalid('f-nombre',true);
   if(!getVal('f-domicilio')) missing.push('Domicilio'), setInvalid('f-domicilio',true);
   if(!getVal('f-localidad')) missing.push('Localidad'), setInvalid('f-localidad',true);
-  const cp=getVal('f-cp'); if(!/^\d{4}$/.test(cp)) missing.push('Código Postal (4 dígitos)'), setInvalid('f-cp',true);
-  const cel=getVal('f-cel'); if(!/^\d{1,15}$/.test(cel)) missing.push('Celular (sólo números, hasta 15 dígitos)'), setInvalid('f-cel',true);
-  const ok = missing.length===0;
-  return { ok, missing, first: ok?null:order.find(id => $(id).classList.contains('invalid')) };
+  if(!/^\d{4}$/.test(getVal('f-cp'))) missing.push('Código Postal (4 dígitos)'), setInvalid('f-cp',true);
+  if(!/^\d{1,15}$/.test(getVal('f-cel'))) missing.push('Celular (sólo números, hasta 15 dígitos)'), setInvalid('f-cel',true);
+  return { ok: missing.length===0, missing };
 }
 
 function renderErrors(list){
@@ -238,109 +269,145 @@ function renderErrors(list){
   box.style.display='block';
 }
 
-/* filtros numéricos */
 $('f-cp').addEventListener('input',e=>{ e.target.value=e.target.value.replace(/[^0-9]/g,'').slice(0,4); });
 $('f-cel').addEventListener('input',e=>{ e.target.value=e.target.value.replace(/[^0-9]/g,'').slice(0,15); });
 
-/* sincroniza preview individual (térmica) y oculta banner si todo ok */
-function syncSingle(){
-  ['remitente','nombre','domicilio','localidad','cp','cel','obs'].forEach(x=>$('v-'+x).textContent=getVal('f-'+x));
-  const v=validateAll(); if(v.ok){ renderErrors([]); }
-}
-['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-cel','f-obs'].forEach(id=>$(id).addEventListener('input',syncSingle));
-
-/* construir una etiqueta DOM */
-function escapeHTML(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function buildLabelNode(data){
-  const wrap=document.createElement('div');
-  wrap.className='label-preview';
-  wrap.innerHTML = `
+/* ---------- PREVIEW SLOTS A4 ---------- */
+function buildSlot(i){
+  const slot = document.createElement('div');
+  slot.className = 'label-preview';
+  slot.dataset.index = String(i);
+  slot.innerHTML = `
     <div class="label-box">
       <div class="brand-row">
         <div class="brand-title">Etiqueta de Envío • GoSpin</div>
         <img src="gospinlogo.png" alt="GoSpin" class="brand-logo" />
       </div>
-      <div class="fieldbox remitente"><div class="flabel">REMITENTE</div><div class="box">${escapeHTML(data.remitente)}</div></div>
-      <div class="fieldbox nombre"><div class="flabel">NOMBRE COMPLETO DE QUIEN RECIBE</div><div class="box">${escapeHTML(data.nombre)}</div></div>
-      <div class="fieldbox domicilio"><div class="flabel">DOMICILIO</div><div class="box">${escapeHTML(data.domicilio)}</div></div>
+      <div class="fieldbox remitente"><div class="flabel">REMITENTE</div><div class="box" id="p${i}-remitente"></div></div>
+      <div class="fieldbox nombre"><div class="flabel">NOMBRE COMPLETO DE QUIEN RECIBE</div><div class="box" id="p${i}-nombre"></div></div>
+      <div class="fieldbox domicilio"><div class="flabel">DOMICILIO</div><div class="box" id="p${i}-domicilio"></div></div>
       <div class="row2">
-        <div class="fieldbox loc"><div class="flabel">LOCALIDAD</div><div class="box">${escapeHTML(data.localidad)}</div></div>
-        <div class="fieldbox cp"><div class="flabel">CÓDIGO POSTAL</div><div class="box">${escapeHTML(data.cp)}</div></div>
+        <div class="fieldbox loc"><div class="flabel">LOCALIDAD</div><div class="box" id="p${i}-localidad"></div></div>
+        <div class="fieldbox cp"><div class="flabel">CÓDIGO POSTAL</div><div class="box" id="p${i}-cp"></div></div>
       </div>
-      <div class="fieldbox cel"><div class="flabel">CELULAR</div><div class="box">${escapeHTML(data.cel)}</div></div>
-      <div class="fieldbox obs"><div class="flabel">OBSERVACIONES</div><div class="box">${escapeHTML(data.obs)}</div></div>
+      <div class="fieldbox cel"><div class="flabel">CELULAR</div><div class="box" id="p${i}-cel"></div></div>
+      <div class="fieldbox obs"><div class="flabel">OBSERVACIONES</div><div class="box" id="p${i}-obs"></div></div>
       <div class="website">WWW.GOSPIN.COM.AR</div>
     </div>
+    <div class="placeholder" id="p${i}-ph">Etiqueta vacía — clic para editar</div>
   `;
-  return wrap;
+  slot.addEventListener('click', ()=> setActive(i, true));
+  return slot;
 }
 
-/* redibuja lista vertical de etiquetas (preview A4 en web) */
-function renderList(){
-  const list=$('labels-list');
-  list.innerHTML='';
-  labels.forEach(d=>list.appendChild(buildLabelNode(d)));
-  $('count').textContent=String(labels.length);
+function initSlots(){
+  const wrap = $('slots'); wrap.innerHTML='';
+  for(let i=0;i<4;i++){ wrap.appendChild(buildSlot(i)); }
+  setActive(0, false);
+  syncAllSlots();
 }
 
-/* modo UI (A4 vs térmica) */
-function updateModeUI(){
-  const mode=(document.querySelector('input[name="pdfsize"]:checked')||{}).value||'a4x4_95';
-  const isA4 = (mode==='a4x4_95');
-  $('a4-area').style.display = isA4 ? '' : 'none';
-  $('single-area').style.display = isA4 ? 'none' : '';
-  // contador visible siempre en A4
+function setActive(i, loadToForm){
+  activeIndex = i;
+  $('active-label').textContent = String(i+1);
+  qa('.label-preview').forEach(el=>el.classList.toggle('active', el.dataset.index == i));
+  if(loadToForm){ loadFormFromData(labels[i]); }
 }
 
-/* auto-agregar cuando todo está válido (Enter o blur de Celular) */
-['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-cel'].forEach(id=>{
-  $(id).addEventListener('keydown',e=>{
-    if(e.key==='Enter'){ e.preventDefault(); tryAutoAdd(); }
-  });
-});
-$('f-cel').addEventListener('blur', tryAutoAdd);
-
-function currentData(){
-  return {
-    remitente:getVal('f-remitente'),
-    nombre:getVal('f-nombre'),
-    domicilio:getVal('f-domicilio'),
-    localidad:getVal('f-localidad'),
-    cp:getVal('f-cp'),
-    cel:getVal('f-cel'),
-    obs:getVal('f-obs')
-  };
-}
-
-function clearForm(){
-  ['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-cel','f-obs'].forEach(id=>{ $(id).value=''; setInvalid(id,false); });
-  syncSingle();
-  $('f-remitente').focus();
-}
-
-function tryAutoAdd(){
-  const mode=(document.querySelector('input[name="pdfsize"]:checked')||{}).value||'a4x4_95';
-  if(mode!=='a4x4_95') return; // sólo auto-agrega en A4
-  if(labels.length>=MAX_PER_SHEET) return;
-
-  const v=validateAll();
-  if(!v.ok){ renderErrors(v.missing); return; }
+function loadFormFromData(d){
+  $('f-remitente').value = d.remitente||'';
+  $('f-nombre').value    = d.nombre||'';
+  $('f-domicilio').value = d.domicilio||'';
+  $('f-localidad').value = d.localidad||'';
+  $('f-cp').value        = d.cp||'';
+  $('f-cel').value       = d.cel||'';
+  $('f-obs').value       = d.obs||'';
   renderErrors([]);
-
-  labels.push(currentData());
-  renderList();
-  clearForm();
+  qa('.invalid').forEach(el=>el.classList.remove('invalid'));
 }
+
+/* Escribo del formulario -> modelo -> preview del slot activo */
+function syncActiveFromForm(){
+  const i = activeIndex;
+  const d = labels[i];
+  d.remitente = getVal('f-remitente');
+  d.nombre    = getVal('f-nombre');
+  d.domicilio = getVal('f-domicilio');
+  d.localidad = getVal('f-localidad');
+  d.cp        = getVal('f-cp');
+  d.cel       = getVal('f-cel');
+  d.obs       = getVal('f-obs');
+
+  // actualizar DOM del slot activo
+  ['remitente','nombre','domicilio','localidad','cp','cel','obs'].forEach(k=>{
+    const el = $(`p${i}-${k}`); if(el) el.textContent = d[k]||'';
+  });
+  // placeholder visible si está vacío por completo
+  const empty = !d.remitente && !d.nombre && !d.domicilio && !d.localidad && !d.cp && !d.cel && !d.obs;
+  const ph = $(`p${i}-ph`); if(ph) ph.style.display = empty ? 'flex' : 'none';
+
+  // si todo ok, oculto banner
+  const v = validateData(d); if(v.ok){ renderErrors([]); }
+}
+
+function syncAllSlots(){
+  for(let i=0;i<4;i++){
+    const d = labels[i];
+    ['remitente','nombre','domicilio','localidad','cp','cel','obs'].forEach(k=>{
+      const el = $(`p${i}-${k}`); if(el) el.textContent = d[k]||'';
+    });
+    const empty = !d.remitente && !d.nombre && !d.domicilio && !d.localidad && !d.cp && !d.cel && !d.obs;
+    const ph = $(`p${i}-ph`); if(ph) ph.style.display = empty ? 'flex' : 'none';
+  }
+}
+
+['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-cel','f-obs'].forEach(id=>{
+  $(id).addEventListener('input', syncActiveFromForm);
+});
+
+/* Cambiar modo UI */
+function updateModeUI(){
+  const mode=(q('input[name="pdfsize"]:checked')||{}).value||MODE_A4;
+  const isA4 = (mode===MODE_A4);
+  $('a4-area').style.display    = isA4 ? '' : 'none';
+  $('single-area').style.display = isA4 ? 'none' : '';
+  // En térmica, el preview individual se llena con los mismos inputs:
+  if(!isA4){
+    // Volcar datos actuales (del form) a single preview:
+    $('v-remitente').textContent = getVal('f-remitente');
+    $('v-nombre').textContent    = getVal('f-nombre');
+    $('v-domicilio').textContent = getVal('f-domicilio');
+    $('v-localidad').textContent = getVal('f-localidad');
+    $('v-cp').textContent        = getVal('f-cp');
+    $('v-cel').textContent       = getVal('f-cel');
+    $('v-obs').textContent       = getVal('f-obs');
+  }
+}
+qa('input[name="pdfsize"]').forEach(r=>r.addEventListener('change', updateModeUI));
+
+/* Limpiar todo (nueva hoja) */
+$('btn-clear').addEventListener('click', ()=>{
+  // limpiar form
+  ['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-cel','f-obs'].forEach(id=>{ $(id).value=''; setInvalid(id,false); });
+  renderErrors([]);
+  // limpiar modelo
+  for(let i=0;i<4;i++) labels[i]=emptyData();
+  syncAllSlots();
+  setActive(0, false);
+  $('f-remitente').focus();
+});
 
 /* Descargar PDF */
+$('btn-pdf').addEventListener('click', descargarPDF);
+
 async function descargarPDF(){
-  const mode=(document.querySelector('input[name="pdfsize"]:checked')||{}).value||'a4x4_95';
+  const mode=(q('input[name="pdfsize"]:checked')||{}).value||MODE_A4;
   const { jsPDF } = window.jspdf;
 
-  if(mode==='10x15'){
-    // térmica: validación y una etiqueta
-    const v=validateAll();
-    if(!v.ok){ renderErrors(v.missing); if(v.first) $(v.first).focus(); return; }
+  if(mode===MODE_TH){
+    // Térmica: validar formulario actual y generar PDF 10×15
+    const vf = validateForm();
+    if(!vf.ok){ renderErrors(vf.missing); if(vf.first) $(vf.first).focus(); return; }
     renderErrors([]);
     const pv=$('single-preview'), prev=pv.style.transform; pv.style.transform='none';
     const canvas=await html2canvas(pv,{scale:2,backgroundColor:'#fff'});
@@ -354,68 +421,57 @@ async function descargarPDF(){
     return;
   }
 
-  // A4x4 (95%) — si no agregaron ninguna, intento agregar la actual si es válida
-  if(labels.length===0){
-    const v=validateAll();
-    if(!v.ok){ renderErrors(v.missing); if(v.first) $(v.first).focus(); return; }
-    labels.push(currentData());
-    renderList();
-    clearForm();
+  // A4: tomar SOLO las etiquetas completas entre las 4
+  // primero, asegurarnos de aplicar el estado actual del form al slot activo
+  syncActiveFromForm();
+
+  const toPrint = labels.map((d,i)=>({i,d,valid:validateData(d)})).filter(x=>x.valid.ok);
+  if(toPrint.length===0){
+    renderErrors(['Completá al menos una etiqueta (todos los campos obligatorios).']);
+    return;
   }
 
-  // Genero A4 VERTICAL (210 × 297 mm)
+  // Generar A4 vertical (210×297 mm), colocar en 2×2 a 95%
   const pdf = new jsPDF({orientation:'p', unit:'mm', format:'a4'});
   const pageW=210, pageH=297;
-
-  // Renderizo cada etiqueta agregada a imagen
-  const images=[];
-  for(const node of $('labels-list').children){
-    const prev=node.style.transform; node.style.transform='none';
-    const canvas=await html2canvas(node,{scale:2,backgroundColor:'#fff'});
-    node.style.transform=prev;
-    images.push(canvas.toDataURL('image/png'));
-  }
-
-  // 2×2 a 95%: W=95mm, H=142.5mm
   const W=95, H=142.5, gutterX=10, gutterY=10;
-  // centrar con pequeños márgenes: total ancho = 95*2 +10 = 200 -> margen horizontal 5mm
-  // total alto = 142.5*2 +10 = 295 -> margen vertical 1mm
   const left = (pageW - (W*2 + gutterX)) / 2;  // 5
   const top  = (pageH - (H*2 + gutterY)) / 2;  // 1
 
-  for(let i=0;i<images.length;i++){
-    if(i>0 && i%4===0){ pdf.addPage('a4','p'); }
-    const slot=i%4; // 0..3
-    const row = Math.floor(slot/2); // 0..1
-    const col = slot%2; // 0..1
-    const x = left + col*(W + gutterX);
-    const y = top  + row*(H + gutterY);
-    pdf.addImage(images[i],'PNG',x,y,W,H);
+  // Para pasar cada slot a imagen, clono el DOM del slot correspondiente en memoria
+  async function nodeImageFromIndex(idx){
+    const node = qa('.label-preview')[idx].cloneNode(true);
+    // ocultar placeholders en el clon
+    const ph = node.querySelector('.placeholder'); if(ph) ph.remove();
+    // necesito que esté en el DOM para html2canvas
+    node.style.position='fixed'; node.style.left='-9999px'; node.style.top='-9999px';
+    document.body.appendChild(node);
+    const canvas = await html2canvas(node,{scale:2,backgroundColor:'#fff'});
+    document.body.removeChild(node);
+    return canvas.toDataURL('image/png');
   }
 
-  const count = images.length;
-  pdf.save(`etiquetas_gospin_A4x4_95_${count}.pdf`);
+  for(let n=0;n<toPrint.length;n++){
+    if(n>0 && n%4===0){ pdf.addPage('a4','p'); }
+    const slot = n%4; // posición en la hoja actual
+    const row = Math.floor(slot/2), col = slot%2;
+    const x = left + col*(W + gutterX);
+    const y = top  + row*(H + gutterY);
+    const dataUrl = await nodeImageFromIndex(toPrint[n].i);
+    pdf.addImage(dataUrl,'PNG',x,y,W,H);
+  }
 
-  // reset para próxima tarea
-  labels=[]; renderList(); $('count').textContent='0';
+  pdf.save(`etiquetas_gospin_A4x4.pdf`);
+  // no reseteo automáticamente: quedan editables para corregir/volver a descargar
 }
 
-/* Botones */
-$('btn-pdf').addEventListener('click', descargarPDF);
-$('btn-clear').addEventListener('click', ()=>{
-  ['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-cel','f-obs'].forEach(id=>{ $(id).value=''; setInvalid(id,false); });
-  renderErrors([]); labels=[]; renderList(); $('count').textContent='0'; $('f-remitente').focus();
-});
-
-/* Cambios de formato */
-document.querySelectorAll('input[name="pdfsize"]').forEach(r=>r.addEventListener('change', ()=>{
+/* Inicializar */
+function init(){
+  initSlots();
   updateModeUI();
-}));
-
-/* init */
-updateModeUI();
-renderList();
-syncSingle();
+  $('f-remitente').focus();
+}
+init();
 </script>
 </body>
 </html>
