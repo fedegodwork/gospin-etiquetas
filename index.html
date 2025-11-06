@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-<title>Generador de Etiquetas • GoSpin (v1.8.4)</title>
+<title>Generador de Etiquetas • GoSpin (v1.8.5)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -69,13 +69,13 @@
   .preview-card .card-body{ padding:16px; gap:12px }
   .status{ font-size:13px; color:#475569; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 
-  /* Grid responsive: 2 por fila si entra, 1 por fila si no */
+  /* === PREVIEW GRID: 95mm fijo por columna, se llenan tantas como entren (2 en desktop) === */
   .slots{
     display:grid;
-    grid-template-columns: repeat(auto-fit, minmax(95mm, 1fr));
+    grid-template-columns: repeat(auto-fill, 95mm);
+    justify-content:center;   /* centra el bloque de columnas dentro del contenedor */
     gap:12px;
     align-content:start;
-    justify-items:start;
   }
 
   /* Etiqueta 95% para preview en A4 */
@@ -109,7 +109,7 @@
 <body>
   <header>
     <div class="page">
-      <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.8.4)</h1>
+      <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.8.5)</h1>
     </div>
   </header>
 
@@ -385,16 +385,7 @@ async function descargarPDF(){
   const mode=(q('input[name="pdfsize"]:checked')||{}).value||MODE_A4;
 
   if(mode===MODE_TH){
-    // Validación mínima (lo mismo que A4 pero usando form actual)
-    const d={
-      remitente:getVal('f-remitente'),
-      nombre:getVal('f-nombre'),
-      domicilio:getVal('f-domicilio'),
-      localidad:getVal('f-localidad'),
-      cp:getVal('f-cp'),
-      cel:getVal('f-cel'),
-      obs:getVal('f-obs')
-    };
+    const d={remitente:getVal('f-remitente'),nombre:getVal('f-nombre'),domicilio:getVal('f-domicilio'),localidad:getVal('f-localidad'),cp:getVal('f-cp'),cel:getVal('f-cel'),obs:getVal('f-obs')};
     const v=validateData(d); if(!v.ok){ renderErrors(v.missing); return; }
     renderErrors([]);
     const pv=$('single-preview'), prev=pv.style.transform; pv.style.transform='none';
@@ -409,7 +400,7 @@ async function descargarPDF(){
     return;
   }
 
-  // A4: sincronizar slot activo y tomar sólo completas
+  // A4
   syncActiveFromForm();
   const completeIdx = labels.map((d,i)=>({i,d,v:validateData(d)})).filter(x=>x.v.ok).map(x=>x.i);
   if(completeIdx.length===0){ renderErrors(['Completá al menos una etiqueta (todos los campos obligatorios).']); return; }
@@ -417,8 +408,8 @@ async function descargarPDF(){
   const pdf=new jsPDF({orientation:'p', unit:'mm', format:'a4'});
   const pageW=210, pageH=297;
   const W=95, H=142.5, gutterX=10, gutterY=10;
-  const left=(pageW-(W*2+gutterX))/2; // 5
-  const top =(pageH-(H*2+gutterY))/2; // 1
+  const left=(pageW-(W*2+gutterX))/2;
+  const top =(pageH-(H*2+gutterY))/2;
 
   async function slotToImage(idx){
     const node=qa('.label-preview')[idx].cloneNode(true);
