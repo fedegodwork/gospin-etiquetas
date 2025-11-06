@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-<title>Generador de Etiquetas • GoSpin (v1.6.3)</title>
+<title>Generador de Etiquetas • GoSpin (v1.7)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -37,13 +37,8 @@
 
   /* -------- AVISO DE ERRORES -------- */
   .alert{
-    display:none;
-    background:var(--danger-bg);
-    border:1px solid #fecaca;
-    color:var(--danger);
-    border-radius:10px;
-    padding:12px 12px;
-    font-size:14px;
+    display:none; background:var(--danger-bg); border:1px solid #fecaca; color:var(--danger);
+    border-radius:10px; padding:12px 12px; font-size:14px;
   }
   .alert-title{ font-weight:800; display:flex; align-items:center; gap:8px; margin:0 0 6px 0 }
   .alert ul{ margin:0; padding-left:18px }
@@ -56,14 +51,16 @@
   .row{ display:grid; grid-template-columns:1fr 180px; gap:10px }
   .field textarea{ min-height:64px; padding:10px 12px; line-height:1.15; resize:vertical }
   .invalid{ border-color:#ef4444 !important; }
-
   @media (max-width:980px){ .field input,.field textarea{ font-size:16px; } }
+
+  .options{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; font-size:13px; color:#475569; }
+  .options .group{ padding:10px; border:1px solid #e6e8eb; border-radius:10px; }
+  .options label{ display:inline-flex; align-items:center; gap:6px; margin-right:10px; cursor:pointer; }
 
   .actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:auto }
   button{ appearance:none; border:0; background:var(--brand); color:#fff; padding:10px 14px; border-radius:10px; font-weight:800; cursor:pointer }
   button.secondary{ background:#e2e8f0; color:#0f172a }
 
-  /* Barra fija móvil */
   @media (max-width:980px){
     body{ padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); }
     .actions{
@@ -106,7 +103,7 @@
 <body>
   <header>
     <div class="page">
-      <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.6.3)</h1>
+      <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.7)</h1>
     </div>
   </header>
 
@@ -119,7 +116,6 @@
           <!-- Aviso de errores -->
           <div id="error-box" class="alert" role="alert" aria-live="polite">
             <p class="alert-title">
-              <!-- ícono -->
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.001 10h2v5h-2v-5zm0 6h2v2h-2v-2z"/><path d="M1 21h22L12 2 1 21z"/></svg>
               <span>Faltan completar los siguientes campos:</span>
             </p>
@@ -155,6 +151,16 @@
           <div class="field">
             <label>OBSERVACIONES</label>
             <textarea id="f-obs" rows="3" maxlength="220" placeholder="(Frágil, horario de entrega, portería, etc.)"></textarea>
+          </div>
+
+          <!-- NUEVO: Tamaño del PDF -->
+          <div class="options">
+            <div class="group">
+              <strong style="font-size:12px; color:#0f172a; display:block; margin-bottom:6px;">Tamaño del PDF</strong>
+              <label><input type="radio" name="pdfsize" value="a4" checked> A4 (recomendado)</label>
+              <label><input type="radio" name="pdfsize" value="10x15"> 10×15 cm (térmica)</label>
+            </div>
+            <span style="font-size:12px; color:#64748b;">En A4 la etiqueta queda centrada en 10×15 cm, sin importar si el visor está en “ajustar a página”.</span>
           </div>
 
           <div class="actions">
@@ -238,7 +244,6 @@ function validateAll(){
   const missing = [];
   const order = ['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-cel'];
 
-  // limpiar estados
   order.forEach(id=>setInvalid(id,false));
 
   if(!getVal('f-remitente')) missing.push('Remitente'), setInvalid('f-remitente',true);
@@ -256,25 +261,18 @@ function validateAll(){
   return { ok, missing, first: ok ? null : order.find(id => $(id).classList.contains('invalid')) };
 }
 
-/* Mostrar/ocultar banner de error */
+/* Banner de error */
 function renderErrors(list){
-  const box = $('error-box');
-  const ul  = $('error-list');
-  if(!list || list.length===0){
-    box.style.display='none';
-    ul.innerHTML='';
-    return;
-  }
+  const box = $('error-box'), ul  = $('error-list');
+  if(!list || list.length===0){ box.style.display='none'; ul.innerHTML=''; return; }
   ul.innerHTML = list.map(txt => `<li>${txt}</li>`).join('');
   box.style.display='block';
 }
 
-/* Sincroniza preview */
+/* Sincroniza preview y oculta banner si todo ok */
 function sync(){
   ['remitente','nombre','domicilio','localidad','cp','cel','obs'].forEach(x=>$('v-'+x).textContent=getVal('f-'+x));
-  // si todo está ok, oculto banner
-  const v = validateAll();
-  if(v.ok){ renderErrors([]); }
+  const v = validateAll(); if(v.ok){ renderErrors([]); }
 }
 ['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-cel','f-obs'].forEach(id=>$(id).addEventListener('input',sync));
 
@@ -287,24 +285,39 @@ function resizePreview(){
 }
 window.addEventListener('resize',resizePreview);
 
-/* Descargar PDF con validación y banner */
+/* Descargar PDF con opción de tamaño de hoja */
 async function descargarPDF(){
   const v = validateAll();
-  if(!v.ok){
-    renderErrors(v.missing);
-    if(v.first){ $(v.first).focus(); }
-    return;
-  }
+  if(!v.ok){ renderErrors(v.missing); if(v.first){ $(v.first).focus(); } return; }
   renderErrors([]);
+
   sync();
   const pv=$('preview'); const prev=pv.style.transform; pv.style.transform='none';
   const canvas=await html2canvas(pv,{scale:2,backgroundColor:'#fff'});
-  const img=canvas.toDataURL('image/png'); const{jsPDF}=window.jspdf;
-  const pdf=new jsPDF({orientation:'p',unit:'mm',format:[100,150]});
-  pdf.addImage(img,'PNG',0,0,100,150);
-  const nombre=getVal('f-nombre').replace(/[^A-Za-z0-9_\-]+/g,'_')||'etiqueta';
+  const img=canvas.toDataURL('image/png');
+  const { jsPDF } = window.jspdf;
+
+  const size = (document.querySelector('input[name="pdfsize"]:checked')||{}).value || 'a4';
+
+  let pdf, fnameSuffix;
+  if(size === 'a4'){
+    pdf = new jsPDF({orientation:'p', unit:'mm', format:'a4'}); // 210 × 297 mm
+    const pageW = 210, pageH = 297;
+    const W = 100, H = 150; // etiqueta 10×15 exacta
+    const x = (pageW - W) / 2;
+    const y = (pageH - H) / 2;
+    pdf.addImage(img, 'PNG', x, y, W, H);
+    fnameSuffix = 'A4';
+  }else{
+    pdf = new jsPDF({orientation:'p', unit:'mm', format:[100,150]}); // página 10×15
+    pdf.addImage(img, 'PNG', 0, 0, 100, 150);
+    fnameSuffix = '10x15';
+  }
+
+  const nombre=(getVal('f-nombre').replace(/[^A-Za-z0-9_\-]+/g,'_'))||'etiqueta';
   const cp=getVal('f-cp')||'0000';
-  pdf.save(`etiqueta_gospin_${cp}_${nombre}.pdf`);
+  pdf.save(`etiqueta_gospin_${cp}_${nombre}_${fnameSuffix}.pdf`);
+
   pv.style.transform=prev; resizePreview();
 }
 $('btn-pdf').addEventListener('click',descargarPDF);
@@ -312,8 +325,7 @@ $('btn-pdf').addEventListener('click',descargarPDF);
 /* Nueva etiqueta */
 $('btn-clear').addEventListener('click',()=>{
   ['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-cel','f-obs'].forEach(id=>{ $(id).value=''; setInvalid(id,false); });
-  renderErrors([]);
-  sync(); $('f-remitente').focus();
+  renderErrors([]); sync(); $('f-remitente').focus();
 });
 
 /* init */
