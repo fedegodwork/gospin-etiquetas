@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-<title>Generador de Etiquetas • GoSpin (v1.8.2)</title>
+<title>Generador de Etiquetas • GoSpin (v1.8.3)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -35,18 +35,15 @@
   .card{ background:#fff; border:1px solid var(--border); border-radius:14px; box-shadow:0 10px 20px rgba(0,0,0,.04); height:100%; display:flex; flex-direction:column; }
   .card .card-body{ padding:18px; display:flex; flex-direction:column; gap:12px; flex:1 }
 
-  /* -------- AVISO DE ERRORES -------- */
   .alert{ display:none; background:var(--danger-bg); border:1px solid #fecaca; color:var(--danger); border-radius:10px; padding:12px; font-size:14px; }
   .alert-title{ font-weight:800; display:flex; align-items:center; gap:8px; margin:0 0 6px 0 }
   .alert ul{ margin:0; padding-left:18px }
   .alert svg{ width:18px; height:18px; flex:0 0 auto }
 
-  /* -------- FORMATO (arriba) -------- */
   .options{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; font-size:13px; color:#475569; }
   .options .group{ padding:10px; border:1px solid var(--border); border-radius:10px; background:#fff; }
   .options label{ display:inline-flex; align-items:center; gap:6px; margin-right:10px; cursor:pointer; }
 
-  /* -------- FORM -------- */
   .field label{ display:block; font-size:12px; font-weight:800; margin-bottom:6px }
   .field input,.field textarea{ width:100%; border:1px solid #cfd3d7; border-radius:10px; font-size:14px; background:#fff; transition:border-color .15s }
   .field input{ height:44px; padding:8px 12px; line-height:1.15 }
@@ -69,14 +66,19 @@
     .actions button{ flex:1; max-width:200px }
   }
 
-  /* -------- PREVIEW A4 (derecha) -------- */
   .preview-card .card-body{ padding:16px; gap:12px }
   .status{ font-size:13px; color:#475569; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-  .slots{ display:grid; grid-template-columns:1fr; gap:10px; }
 
-  /* Etiqueta 95% para preview en A4 (vertical, una debajo de otra) */
+  .slots{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(95mm, 1fr));
+    gap:12px;
+    align-content:start;
+    justify-items:start;
+  }
+
   .label-preview{ width:95mm; height:142.5mm; background:#fff; color:#000; position:relative; border:1px solid #d1d5db; border-radius:8px; cursor:pointer; }
-  .label-preview.active{ outline:3px solid #0ea5e9; }
+  .label-preview.active{ outline:3px solid #0ea5e9; outline-offset:0; }
   .placeholder{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
     color:#94a3b8; font-size:13px; font-weight:700; user-select:none;
@@ -96,7 +98,6 @@
   .obs .box{ min-height:12.8mm }
   .website{ text-align:center; font-weight:900; font-size:10.2px; margin-top:auto }
 
-  /* PREVIEW térmica (individual) */
   .single-wrap{ display:flex; }
   .single{ width:100mm; height:150mm; background:#fff; color:#000; position:relative; border:1px solid #d1d5db; border-radius:8px; }
   .single .label-box{ inset:7mm; border-width:1.4px; padding:4.5mm }
@@ -105,17 +106,14 @@
 <body>
   <header>
     <div class="page">
-      <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.8.2)</h1>
+      <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.8.3)</h1>
     </div>
   </header>
 
   <main>
     <div class="page">
-      <!-- PANEL IZQUIERDO -->
       <section class="card form-card printable">
         <div class="card-body">
-
-          <!-- Formato arriba de todo -->
           <div class="options">
             <div class="group">
               <strong style="font-size:12px; color:#0f172a; display:block; margin-bottom:6px;">Formato</strong>
@@ -124,7 +122,6 @@
             </div>
           </div>
 
-          <!-- Aviso de errores -->
           <div id="error-box" class="alert" role="alert" aria-live="polite">
             <p class="alert-title">
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.001 10h2v5h-2v-5zm0 6h2v2h-2v-2z"/><path d="M1 21h22L12 2 1 21z"/></svg>
@@ -133,7 +130,6 @@
             <ul id="error-list"></ul>
           </div>
 
-          <!-- Formulario -->
           <div class="field">
             <label>REMITENTE</label>
             <input id="f-remitente" maxlength="64" placeholder="(Ingresar únicamente nombre de comercio)"/>
@@ -175,7 +171,6 @@
         </div>
       </section>
 
-      <!-- PANEL DERECHO -->
       <section class="card preview-card">
         <div class="card-body">
           <div class="status">
@@ -184,14 +179,10 @@
             <span>A4: se imprimen sólo las etiquetas completas.</span>
           </div>
 
-          <!-- Vista A4 (lista vertical con 4 slots) -->
           <div class="preview-wrap" id="a4-area">
-            <div id="slots" class="slots">
-              <!-- 4 slots se inyectan por JS -->
-            </div>
+            <div id="slots" class="slots"></div>
           </div>
 
-          <!-- Vista Térmica (individual) -->
           <div class="preview-wrap" id="single-area" style="display:none">
             <div class="single-wrap">
               <div class="single" id="single-preview">
@@ -217,7 +208,6 @@
 
         </div>
       </section>
-
     </div>
   </main>
 
@@ -226,252 +216,11 @@ function $(id){return document.getElementById(id);}
 function q(sel){return document.querySelector(sel);}
 function qa(sel){return Array.from(document.querySelectorAll(sel));}
 function getVal(id){return ($(id).value||'').trim();}
-function setInvalid(id, on){ $(id).classList.toggle('invalid', !!on); }
-
-const MODE_A4 = 'a4x4_95';
-const MODE_TH = '10x15';
-
-let activeIndex = 0; // 0..3
-const labels = [emptyData(), emptyData(), emptyData(), emptyData()];
-
-function emptyData(){
-  return { remitente:'', nombre:'', domicilio:'', localidad:'', cp:'', cel:'', obs:'' };
-}
-
-function validateData(d){
-  const missing = [];
-  if(!d.remitente) missing.push('Remitente');
-  if(!d.nombre)    missing.push('Nombre completo de quien recibe');
-  if(!d.domicilio) missing.push('Domicilio');
-  if(!d.localidad) missing.push('Localidad');
-  if(!/^\d{4}$/.test(d.cp)) missing.push('Código Postal (4 dígitos)');
-  if(!/^\d{1,15}$/.test(d.cel)) missing.push('Celular (sólo números, hasta 15 dígitos)');
-  return { ok: missing.length===0, missing };
-}
-
-function validateForm(){
-  const missing = [];
-  const order = ['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-cel'];
-  order.forEach(id=>setInvalid(id,false));
-  if(!getVal('f-remitente')) missing.push('Remitente'), setInvalid('f-remitente',true);
-  if(!getVal('f-nombre'))    missing.push('Nombre completo de quien recibe'), setInvalid('f-nombre',true);
-  if(!getVal('f-domicilio')) missing.push('Domicilio'), setInvalid('f-domicilio',true);
-  if(!getVal('f-localidad')) missing.push('Localidad'), setInvalid('f-localidad',true);
-  if(!/^\d{4}$/.test(getVal('f-cp'))) missing.push('Código Postal (4 dígitos)'), setInvalid('f-cp',true);
-  if(!/^\d{1,15}$/.test(getVal('f-cel'))) missing.push('Celular (sólo números, hasta 15 dígitos)'), setInvalid('f-cel',true);
-  return { ok: missing.length===0, missing };
-}
-
-function renderErrors(list){
-  const box=$('error-box'), ul=$('error-list');
-  if(!list || list.length===0){ box.style.display='none'; ul.innerHTML=''; return; }
-  ul.innerHTML=list.map(t=>`<li>${t}</li>`).join('');
-  box.style.display='block';
-}
-
-$('f-cp').addEventListener('input',e=>{ e.target.value=e.target.value.replace(/[^0-9]/g,'').slice(0,4); });
-$('f-cel').addEventListener('input',e=>{ e.target.value=e.target.value.replace(/[^0-9]/g,'').slice(0,15); });
-
-/* ---------- PREVIEW SLOTS A4 ---------- */
-function buildSlot(i){
-  const slot = document.createElement('div');
-  slot.className = 'label-preview';
-  slot.dataset.index = String(i);
-  slot.innerHTML = `
-    <div class="label-box">
-      <div class="brand-row">
-        <div class="brand-title">Etiqueta de Envío • GoSpin</div>
-        <img src="gospinlogo.png" alt="GoSpin" class="brand-logo" />
-      </div>
-      <div class="fieldbox remitente"><div class="flabel">REMITENTE</div><div class="box" id="p${i}-remitente"></div></div>
-      <div class="fieldbox nombre"><div class="flabel">NOMBRE COMPLETO DE QUIEN RECIBE</div><div class="box" id="p${i}-nombre"></div></div>
-      <div class="fieldbox domicilio"><div class="flabel">DOMICILIO</div><div class="box" id="p${i}-domicilio"></div></div>
-      <div class="row2">
-        <div class="fieldbox loc"><div class="flabel">LOCALIDAD</div><div class="box" id="p${i}-localidad"></div></div>
-        <div class="fieldbox cp"><div class="flabel">CÓDIGO POSTAL</div><div class="box" id="p${i}-cp"></div></div>
-      </div>
-      <div class="fieldbox cel"><div class="flabel">CELULAR</div><div class="box" id="p${i}-cel"></div></div>
-      <div class="fieldbox obs"><div class="flabel">OBSERVACIONES</div><div class="box" id="p${i}-obs"></div></div>
-      <div class="website">WWW.GOSPIN.COM.AR</div>
-    </div>
-    <div class="placeholder" id="p${i}-ph">Etiqueta vacía — clic para editar</div>
-  `;
-  slot.addEventListener('click', ()=> setActive(i, true));
-  return slot;
-}
-
-function initSlots(){
-  const wrap = $('slots'); wrap.innerHTML='';
-  for(let i=0;i<4;i++){ wrap.appendChild(buildSlot(i)); }
-  setActive(0, false);
-  syncAllSlots();
-}
-
-function setActive(i, loadToForm){
-  activeIndex = i;
-  $('active-label').textContent = String(i+1);
-  qa('.label-preview').forEach(el=>el.classList.toggle('active', el.dataset.index == i));
-  if(loadToForm){ loadFormFromData(labels[i]); }
-}
-
-function loadFormFromData(d){
-  $('f-remitente').value = d.remitente||'';
-  $('f-nombre').value    = d.nombre||'';
-  $('f-domicilio').value = d.domicilio||'';
-  $('f-localidad').value = d.localidad||'';
-  $('f-cp').value        = d.cp||'';
-  $('f-cel').value       = d.cel||'';
-  $('f-obs').value       = d.obs||'';
-  renderErrors([]);
-  qa('.invalid').forEach(el=>el.classList.remove('invalid'));
-}
-
-/* Escribo del formulario -> modelo -> preview del slot activo */
-function syncActiveFromForm(){
-  const i = activeIndex;
-  const d = labels[i];
-  d.remitente = getVal('f-remitente');
-  d.nombre    = getVal('f-nombre');
-  d.domicilio = getVal('f-domicilio');
-  d.localidad = getVal('f-localidad');
-  d.cp        = getVal('f-cp');
-  d.cel       = getVal('f-cel');
-  d.obs       = getVal('f-obs');
-
-  // actualizar DOM del slot activo
-  ['remitente','nombre','domicilio','localidad','cp','cel','obs'].forEach(k=>{
-    const el = $(`p${i}-${k}`); if(el) el.textContent = d[k]||'';
-  });
-  // placeholder visible si está vacío por completo
-  const empty = !d.remitente && !d.nombre && !d.domicilio && !d.localidad && !d.cp && !d.cel && !d.obs;
-  const ph = $(`p${i}-ph`); if(ph) ph.style.display = empty ? 'flex' : 'none';
-
-  // si todo ok, oculto banner
-  const v = validateData(d); if(v.ok){ renderErrors([]); }
-}
-
-function syncAllSlots(){
-  for(let i=0;i<4;i++){
-    const d = labels[i];
-    ['remitente','nombre','domicilio','localidad','cp','cel','obs'].forEach(k=>{
-      const el = $(`p${i}-${k}`); if(el) el.textContent = d[k]||'';
-    });
-    const empty = !d.remitente && !d.nombre && !d.domicilio && !d.localidad && !d.cp && !d.cel && !d.obs;
-    const ph = $(`p${i}-ph`); if(ph) ph.style.display = empty ? 'flex' : 'none';
-  }
-}
-
-['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-cel','f-obs'].forEach(id=>{
-  $(id).addEventListener('input', syncActiveFromForm);
-});
-
-/* Cambiar modo UI */
-function updateModeUI(){
-  const mode=(q('input[name="pdfsize"]:checked')||{}).value||MODE_A4;
-  const isA4 = (mode===MODE_A4);
-  $('a4-area').style.display    = isA4 ? '' : 'none';
-  $('single-area').style.display = isA4 ? 'none' : '';
-  // En térmica, el preview individual se llena con los mismos inputs:
-  if(!isA4){
-    // Volcar datos actuales (del form) a single preview:
-    $('v-remitente').textContent = getVal('f-remitente');
-    $('v-nombre').textContent    = getVal('f-nombre');
-    $('v-domicilio').textContent = getVal('f-domicilio');
-    $('v-localidad').textContent = getVal('f-localidad');
-    $('v-cp').textContent        = getVal('f-cp');
-    $('v-cel').textContent       = getVal('f-cel');
-    $('v-obs').textContent       = getVal('f-obs');
-  }
-}
-qa('input[name="pdfsize"]').forEach(r=>r.addEventListener('change', updateModeUI));
-
-/* Limpiar todo (nueva hoja) */
-$('btn-clear').addEventListener('click', ()=>{
-  // limpiar form
-  ['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-cel','f-obs'].forEach(id=>{ $(id).value=''; setInvalid(id,false); });
-  renderErrors([]);
-  // limpiar modelo
-  for(let i=0;i<4;i++) labels[i]=emptyData();
-  syncAllSlots();
-  setActive(0, false);
-  $('f-remitente').focus();
-});
-
-/* Descargar PDF */
-$('btn-pdf').addEventListener('click', descargarPDF);
-
-async function descargarPDF(){
-  const mode=(q('input[name="pdfsize"]:checked')||{}).value||MODE_A4;
-  const { jsPDF } = window.jspdf;
-
-  if(mode===MODE_TH){
-    // Térmica: validar formulario actual y generar PDF 10×15
-    const vf = validateForm();
-    if(!vf.ok){ renderErrors(vf.missing); if(vf.first) $(vf.first).focus(); return; }
-    renderErrors([]);
-    const pv=$('single-preview'), prev=pv.style.transform; pv.style.transform='none';
-    const canvas=await html2canvas(pv,{scale:2,backgroundColor:'#fff'});
-    const img=canvas.toDataURL('image/png');
-    const pdf=new jsPDF({orientation:'p', unit:'mm', format:[100,150]});
-    pdf.addImage(img,'PNG',0,0,100,150);
-    const nombre=(getVal('f-nombre').replace(/[^A-Za-z0-9_\-]+/g,'_'))||'etiqueta';
-    const cp=getVal('f-cp')||'0000';
-    pdf.save(`etiqueta_gospin_${cp}_${nombre}_10x15.pdf`);
-    pv.style.transform=prev;
-    return;
-  }
-
-  // A4: tomar SOLO las etiquetas completas entre las 4
-  // primero, asegurarnos de aplicar el estado actual del form al slot activo
-  syncActiveFromForm();
-
-  const toPrint = labels.map((d,i)=>({i,d,valid:validateData(d)})).filter(x=>x.valid.ok);
-  if(toPrint.length===0){
-    renderErrors(['Completá al menos una etiqueta (todos los campos obligatorios).']);
-    return;
-  }
-
-  // Generar A4 vertical (210×297 mm), colocar en 2×2 a 95%
-  const pdf = new jsPDF({orientation:'p', unit:'mm', format:'a4'});
-  const pageW=210, pageH=297;
-  const W=95, H=142.5, gutterX=10, gutterY=10;
-  const left = (pageW - (W*2 + gutterX)) / 2;  // 5
-  const top  = (pageH - (H*2 + gutterY)) / 2;  // 1
-
-  // Para pasar cada slot a imagen, clono el DOM del slot correspondiente en memoria
-  async function nodeImageFromIndex(idx){
-    const node = qa('.label-preview')[idx].cloneNode(true);
-    // ocultar placeholders en el clon
-    const ph = node.querySelector('.placeholder'); if(ph) ph.remove();
-    // necesito que esté en el DOM para html2canvas
-    node.style.position='fixed'; node.style.left='-9999px'; node.style.top='-9999px';
-    document.body.appendChild(node);
-    const canvas = await html2canvas(node,{scale:2,backgroundColor:'#fff'});
-    document.body.removeChild(node);
-    return canvas.toDataURL('image/png');
-  }
-
-  for(let n=0;n<toPrint.length;n++){
-    if(n>0 && n%4===0){ pdf.addPage('a4','p'); }
-    const slot = n%4; // posición en la hoja actual
-    const row = Math.floor(slot/2), col = slot%2;
-    const x = left + col*(W + gutterX);
-    const y = top  + row*(H + gutterY);
-    const dataUrl = await nodeImageFromIndex(toPrint[n].i);
-    pdf.addImage(dataUrl,'PNG',x,y,W,H);
-  }
-
-  pdf.save(`etiquetas_gospin_A4x4.pdf`);
-  // no reseteo automáticamente: quedan editables para corregir/volver a descargar
-}
-
-/* Inicializar */
-function init(){
-  initSlots();
-  updateModeUI();
-  $('f-remitente').focus();
-}
-init();
-</script>
-</body>
-</html>
+function setInvalid(id,on){$(id).classList.toggle('invalid',!!on);}
+const MODE_A4='a4x4_95',MODE_TH='10x15';let activeIndex=0;const labels=[emptyData(),emptyData(),emptyData(),emptyData()];
+function emptyData(){return{remitente:'',nombre:'',domicilio:'',localidad:'',cp:'',cel:'',obs:''}}
+function validateData(d){const m=[];if(!d.remitente)m.push('Remitente');if(!d.nombre)m.push('Nombre completo de quien recibe');if(!d.domicilio)m.push('Domicilio');if(!d.localidad)m.push('Localidad');if(!/^\d{4}$/.test(d.cp))m.push('Código Postal (4 dígitos)');if(!/^\d{1,15}$/.test(d.cel))m.push('Celular (sólo números, hasta 15 dígitos)');return{ok:m.length===0,missing:m}}
+function renderErrors(l){const b=$('error-box'),u=$('error-list');if(!l||l.length===0){b.style.display='none';u.innerHTML='';return;}u.innerHTML=l.map(t=>`<li>${t}</li>`).join('');b.style.display='block';}
+function buildSlot(i){const s=document.createElement('div');s.className='label-preview';s.dataset.index=i; s.innerHTML=`<div class="label-box"><div class="brand-row"><div class="brand-title">Etiqueta de Envío • GoSpin</div><img src="gospinlogo.png" class="brand-logo"/></div><div class="fieldbox remitente"><div class="flabel">REMITENTE</div><div class="box" id="p${i}-remitente"></div></div><div class="fieldbox nombre"><div class="flabel">NOMBRE COMPLETO DE QUIEN RECIBE</div><div class="box" id="p${i}-nombre"></div></div><div class="fieldbox domicilio"><div class="flabel">DOMICILIO</div><div class="box" id="p${i}-domicilio"></div></div><div class="row2"><div class="fieldbox loc"><div class="flabel">LOCALIDAD</div><div class="box" id="p${i}-localidad"></div></div><div class="fieldbox cp"><div class="flabel">CÓDIGO POSTAL</div><div class="box" id="p${i}-cp"></div></div></div><div class="fieldbox cel"><div class="flabel">CELULAR</div><div class="box" id="p${i}-cel"></div></div><div class="fieldbox obs"><div class="flabel">OBSERVACIONES</div><div class="box" id="p${i}-obs"></div></div><div class="website">WWW.GOSPIN.COM.AR</div></div><div class="placeholder" id="p${i}-ph">Etiqueta vacía — clic para editar</div>`;s.addEventListener('click',()=>setActive(i,true));return s;}
+function initSlots(){const w=$('slots');w.innerHTML='';for(let i=0;i<4;i++)w.appendChild(buildSlot(i));setActive(0,false);syncAll();}
+function setActive(i,l){activeIndex=i;$('active-label').textContent=i+1;qa('.label-preview').forEach(e=>e.classList.toggle('active',e.dataset.index==i));if(l)loadForm(labels[i
