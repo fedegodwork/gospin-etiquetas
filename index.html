@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-<title>Generador de Etiquetas • GoSpin (v1.8.5)</title>
+<title>Generador de Etiquetas • GoSpin (v1.8.6)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -69,35 +69,43 @@
   .preview-card .card-body{ padding:16px; gap:12px }
   .status{ font-size:13px; color:#475569; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 
-  /* === PREVIEW GRID: 95mm fijo por columna, se llenan tantas como entren (2 en desktop) === */
+  /* ===== PREVIEW GRID =====
+     En móvil: 1 por fila.
+     En escritorio (>=1024px): 2 columnas fijas y centradas. */
   .slots{
     display:grid;
-    grid-template-columns: repeat(auto-fill, 95mm);
-    justify-content:center;   /* centra el bloque de columnas dentro del contenedor */
+    grid-template-columns: 1fr;       /* móvil: 1 */
+    justify-content:center;
     gap:12px;
     align-content:start;
   }
+  @media (min-width:1024px){
+    .slots{
+      grid-template-columns: 92mm 92mm;  /* fuerza 2 columnas */
+      justify-content:center;
+    }
+  }
 
-  /* Etiqueta 95% para preview en A4 */
-  .label-preview{ width:95mm; height:142.5mm; background:#fff; color:#000; position:relative; border:1px solid #d1d5db; border-radius:8px; cursor:pointer; }
+  /* Etiqueta (preview) — 92mm para que entren 2 holgadas en desktop */
+  .label-preview{ width:92mm; height:138mm; background:#fff; color:#000; position:relative; border:1px solid #d1d5db; border-radius:8px; cursor:pointer; }
   .label-preview.active{ outline:3px solid #0ea5e9; outline-offset:0; }
   .placeholder{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
     color:#94a3b8; font-size:13px; font-weight:700; user-select:none;
   }
 
-  .label-box{ position:absolute; inset:6.65mm; border:1.3px solid #000; padding:4.3mm; display:flex; flex-direction:column; gap:2.3mm }
+  .label-box{ position:absolute; inset:6.5mm; border:1.3px solid #000; padding:4.2mm; display:flex; flex-direction:column; gap:2.2mm }
   .brand-row{ display:grid; grid-template-columns:1fr auto; align-items:center }
   .brand-title{ font-weight:900; font-size:11.2px; letter-spacing:.2px }
   .brand-logo{ width:17mm; height:auto; object-fit:contain }
 
   .fieldbox{ display:flex; flex-direction:column; gap:.75mm }
   .flabel{ font-size:8.8px; font-weight:900 }
-  .box{ border:1px solid #000; padding:2.3mm; min-height:9.5mm; font-size:11.2px; line-height:1.12; white-space:pre-wrap; word-wrap:break-word }
-  .row2{ display:grid; grid-template-columns:1fr 26.5mm; gap:2.4mm; align-items:start }
-  .cp .box{ font-size:13.4px; font-weight:400; text-align:left }
+  .box{ border:1px solid #000; padding:2.2mm; min-height:9.2mm; font-size:11.2px; line-height:1.12; white-space:pre-wrap; word-wrap:break-word }
+  .row2{ display:grid; grid-template-columns:1fr 26mm; gap:2.3mm; align-items:start }
+  .cp .box{ font-size:13.2px; font-weight:400; text-align:left }
   .cel .box{ font-size:11.2px; font-weight:400 }
-  .obs .box{ min-height:12.8mm }
+  .obs .box{ min-height:12.5mm }
   .website{ text-align:center; font-weight:900; font-size:10.2px; margin-top:auto }
 
   /* PREVIEW térmica (individual) */
@@ -109,7 +117,7 @@
 <body>
   <header>
     <div class="page">
-      <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.8.5)</h1>
+      <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.8.6)</h1>
     </div>
   </header>
 
@@ -149,16 +157,16 @@
             <label>DOMICILIO</label>
             <input id="f-domicilio" maxlength="90" placeholder="(Calle, Número, Piso/Departamento)"/>
           </div>
-          <div class="row">
-            <div class="field">
-              <label>LOCALIDAD</label>
-              <input id="f-localidad" maxlength="48" placeholder="(Ciudad/Localidad)"/>
+            <div class="row">
+              <div class="field">
+                <label>LOCALIDAD</label>
+                <input id="f-localidad" maxlength="48" placeholder="(Ciudad/Localidad)"/>
+              </div>
+              <div class="field">
+                <label>CÓDIGO POSTAL</label>
+                <input id="f-cp" inputmode="numeric" maxlength="4" placeholder="(4 dígitos, ej. 1602)"/>
+              </div>
             </div>
-            <div class="field">
-              <label>CÓDIGO POSTAL</label>
-              <input id="f-cp" inputmode="numeric" maxlength="4" placeholder="(4 dígitos, ej. 1602)"/>
-            </div>
-          </div>
           <div class="field">
             <label>CELULAR</label>
             <input id="f-cel" inputmode="numeric" maxlength="15" placeholder="(Sólo números, sin + ni guiones)"/>
@@ -223,7 +231,6 @@
   </main>
 
 <script>
-/* Utilidades */
 function $(id){return document.getElementById(id);}
 function q(sel){return document.querySelector(sel);}
 function qa(sel){return Array.from(document.querySelectorAll(sel));}
@@ -233,7 +240,7 @@ function setInvalid(id,on){$(id).classList.toggle('invalid',!!on);}
 const MODE_A4='a4x4_95';
 const MODE_TH='10x15';
 
-let activeIndex=0; // 0..3
+let activeIndex=0;
 const labels=[empty(),empty(),empty(),empty()];
 
 function empty(){ return {remitente:'',nombre:'',domicilio:'',localidad:'',cp:'',cel:'',obs:''}; }
@@ -256,11 +263,9 @@ function renderErrors(list){
   box.style.display='block';
 }
 
-/* Inputs: sanitizar numéricos */
 $('f-cp').addEventListener('input',e=>{ e.target.value=e.target.value.replace(/[^0-9]/g,'').slice(0,4); });
 $('f-cel').addEventListener('input',e=>{ e.target.value=e.target.value.replace(/[^0-9]/g,'').slice(0,15); });
 
-/* Construcción de slots A4 */
 function buildSlot(i){
   const slot=document.createElement('div');
   slot.className='label-preview';
@@ -313,7 +318,6 @@ function loadFormFromData(d){
   renderErrors([]); qa('.invalid').forEach(el=>el.classList.remove('invalid'));
 }
 
-/* Form -> modelo -> preview del slot activo */
 function syncActiveFromForm(){
   const i=activeIndex, d=labels[i];
   d.remitente=getVal('f-remitente');
@@ -344,12 +348,10 @@ function syncAllSlots(){
   }
 }
 
-/* Escuchar cambios del form */
 ['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-cel','f-obs'].forEach(id=>{
   $(id).addEventListener('input', syncActiveFromForm);
 });
 
-/* Cambiar modo */
 function updateModeUI(){
   const mode=(q('input[name="pdfsize"]:checked')||{}).value||MODE_A4;
   const isA4=(mode===MODE_A4);
@@ -367,7 +369,6 @@ function updateModeUI(){
 }
 qa('input[name="pdfsize"]').forEach(r=>r.addEventListener('change', updateModeUI));
 
-/* Limpiar todo */
 $('btn-clear').addEventListener('click', ()=>{
   ['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-cel','f-obs'].forEach(id=>{ $(id).value=''; setInvalid(id,false); });
   renderErrors([]);
@@ -377,7 +378,6 @@ $('btn-clear').addEventListener('click', ()=>{
   $('f-remitente').focus();
 });
 
-/* Descargar PDF */
 $('btn-pdf').addEventListener('click', descargarPDF);
 
 async function descargarPDF(){
@@ -433,7 +433,6 @@ async function descargarPDF(){
   pdf.save(`etiquetas_gospin_A4x4.pdf`);
 }
 
-/* Init */
 function init(){
   initSlots();
   updateModeUI();
