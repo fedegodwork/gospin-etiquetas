@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-<title>Generador de Etiquetas • GoSpin (v1.8.7)</title>
+<title>Generador de Etiquetas • GoSpin (v1.9.2)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
 <style>
-  :root{ --ink:#0f172a; --muted:#64748b; --brand:#0ea5e9; --danger:#b91c1c; --danger-bg:#ffeaea; --border:#e6e8eb; }
+  :root{ --ink:#0f172a; --muted:#64748b; --brand:#0ea5e9; --ok:#16a34a; --danger:#b91c1c; --danger-bg:#ffeaea; --border:#e6e8eb; }
   *{ box-sizing:border-box }
   html{ -webkit-text-size-adjust:100%; }
   html, body{ overflow-x:hidden; }
@@ -44,15 +44,41 @@
   .options .group{ padding:10px; border:1px solid var(--border); border-radius:10px; background:#fff; }
   .options label{ display:inline-flex; align-items:center; gap:6px; margin-right:10px; cursor:pointer; }
 
+  /* Selector de etiquetas */
+  .selector{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .selector .tag{ border:1px solid var(--border); background:#fff; padding:8px 10px; border-radius:10px; font-size:13px; color:#0f172a; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:8px }
+  .selector .tag small{ font-weight:700; color:#64748b }
+  .selector .tag.active{ outline:2px solid var(--brand); }
+  .dot{ width:10px; height:10px; border-radius:999px; background:#cbd5e1 }
+  .dot.ok{ background:var(--ok) }
+  .dot.edit{ background:var(--brand) }
+
   .field label{ display:block; font-size:12px; font-weight:800; margin-bottom:6px }
   .field input,.field textarea{ width:100%; border:1px solid #cfd3d7; border-radius:10px; font-size:14px; background:#fff; transition:border-color .15s }
   .field input{ height:44px; padding:8px 12px; line-height:1.15 }
   .row{ display:grid; grid-template-columns:1fr 180px; gap:10px }
   .field textarea{ min-height:64px; padding:10px 12px; line-height:1.15; resize:vertical }
   .invalid{ border-color:#ef4444 !important; }
+  input[type="text"], textarea{ text-transform:uppercase; } /* ver en MAYÚSCULAS */
 
-  /* >>> Mostrar lo que se escribe en MAYÚSCULAS (sólo texto) */
-  input[type="text"], textarea{ text-transform:uppercase; }
+  /* Tooltip de onboarding */
+  .tip{
+    display:none; position:relative; border:1px solid #bfdbfe; background:#eff6ff; color:#0f172a;
+    padding:10px 12px; border-radius:10px; font-size:13px;
+  }
+  .tip:after{
+    content:""; position:absolute; top:-8px; left:22px; width:0; height:0;
+    border-left:8px solid transparent; border-right:8px solid transparent;
+    border-bottom:8px solid #eff6ff;
+  }
+  .tip-actions{ margin-top:8px; display:flex; gap:8px; flex-wrap:wrap }
+  .tip button{ border:0; border-radius:8px; padding:6px 10px; font-weight:800; cursor:pointer }
+  .tip .go{ background:var(--brand); color:#fff }
+  .tip .ok{ background:#e2e8f0; color:#0f172a }
+
+  .hint{ display:none; border:1px dashed #cbd5e1; background:#f8fafc; color:#0f172a; padding:10px 12px; border-radius:10px; font-size:13px }
+  .hint b{ color:#0f172a }
+  .hint .go{ margin-left:10px; background:var(--brand); color:#fff; border:0; border-radius:8px; padding:6px 10px; font-weight:800; cursor:pointer }
 
   .actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:8px }
   button{ appearance:none; border:0; background:var(--brand); color:#fff; padding:10px 14px; border-radius:10px; font-weight:800; cursor:pointer }
@@ -64,7 +90,7 @@
   /* PREVIEW GRID — desktop 2×2, mobile 1×N */
   .slots{
     display:grid;
-    grid-template-columns: 1fr;       /* móvil */
+    grid-template-columns: 1fr; /* móvil */
     justify-content:center;
     gap:12px;
     align-content:start;
@@ -73,9 +99,11 @@
     .slots{ grid-template-columns: 92mm 92mm; justify-content:center; }
   }
 
-  .label-preview{ width:92mm; height:138mm; background:#fff; color:#000; position:relative; border:1px solid #d1d5db; border-radius:8px; cursor:pointer; }
+  .label-preview{ width:92mm; height:138mm; background:#fff; color:#000; position:relative; border:1px solid #d1d5db; border-radius:8px; cursor:pointer; overflow:hidden }
   .label-preview.active{ outline:3px solid #0ea5e9; outline-offset:0; }
-  .placeholder{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:13px; font-weight:700; user-select:none; }
+  .badge{ position:absolute; top:6px; left:6px; background:rgba(15,23,42,.85); color:#fff; font-weight:800; font-size:11px; padding:3px 7px; border-radius:8px; z-index:2 }
+  .placeholder{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:13px; font-weight:700; user-select:none; padding:8px; text-align:center }
+  .placeholder b{ color:#64748b }
 
   .label-box{ position:absolute; inset:6.5mm; border:1.3px solid #000; padding:4.2mm; display:flex; flex-direction:column; gap:2.2mm }
   .brand-row{ display:grid; grid-template-columns:1fr auto; align-items:center }
@@ -99,7 +127,7 @@
 <body>
   <header>
     <div class="page">
-      <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.8.7)</h1>
+      <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.9.2)</h1>
     </div>
   </header>
 
@@ -115,6 +143,24 @@
               <label><input type="radio" name="pdfsize" value="a4x4_95" checked> A4 · 4 etiquetas por hoja</label>
               <label><input type="radio" name="pdfsize" value="10x15"> Térmica 10×15</label>
             </div>
+          </div>
+
+          <!-- Selector 1–4 -->
+          <div class="selector" id="selector"></div>
+
+          <!-- Tooltip de onboarding -->
+          <div id="onboard-tip" class="tip">
+            <b>Podés cargar hasta 4 etiquetas.</b> Usá los botones <b>1–4</b> o hacé clic en las tarjetas de la derecha. Probá con la <b>etiqueta 2</b>.
+            <div class="tip-actions">
+              <button type="button" class="go" id="tip-go">Ir a etiqueta 2</button>
+              <button type="button" class="ok" id="tip-ok">Entendido</button>
+            </div>
+          </div>
+
+          <!-- Aviso “Siguiente etiqueta” -->
+          <div id="next-hint" class="hint" style="display:none">
+            <span><b>Etiqueta completa.</b> ¿Querés cargar la próxima?</span>
+            <button class="go" id="btn-next-hint">Ir a la siguiente</button>
           </div>
 
           <!-- Errores -->
@@ -160,6 +206,7 @@
 
           <div class="actions">
             <button id="btn-pdf">Descargar PDF</button>
+            <button id="btn-next" class="secondary">Siguiente etiqueta</button>
             <button id="btn-clear" class="secondary">Borrar todo</button>
           </div>
           <p style="font-size:12px; color:#475569; margin:2px 0 0">
@@ -218,17 +265,24 @@ function $(id){return document.getElementById(id);}
 function q(sel){return document.querySelector(sel);}
 function qa(sel){return Array.from(document.querySelectorAll(sel));}
 function getVal(id){return ($(id).value||'').trim();}
+function toUC(s){ return (s||'').toUpperCase(); }
 function setInvalid(id,on){$(id).classList.toggle('invalid',!!on);}
+
+/* HAPTICS (vibración suave si está disponible) */
+function buzz(pattern=20){
+  try{
+    if('vibrate' in navigator){ navigator.vibrate(pattern); }
+  }catch(e){}
+}
 
 const MODE_A4='a4x4_95';
 const MODE_TH='10x15';
+const TIP_KEY='gs_onboard_tip_v191';
 
 let activeIndex=0; // 0..3
 const labels=[empty(),empty(),empty(),empty()];
 
 function empty(){ return {remitente:'',nombre:'',domicilio:'',localidad:'',cp:'',cel:'',obs:''}; }
-
-function toUC(s){ return (s||'').toUpperCase(); } // mayúsculas seguras
 
 function validateData(d){
   const m=[];
@@ -252,12 +306,35 @@ function renderErrors(list){
 $('f-cp').addEventListener('input',e=>{ e.target.value=e.target.value.replace(/[^0-9]/g,'').slice(0,4); });
 $('f-cel').addEventListener('input',e=>{ e.target.value=e.target.value.replace(/[^0-9]/g,'').slice(0,15); });
 
+/* Selector UI */
+function buildSelector(){
+  const el=$('selector'); el.innerHTML='';
+  for(let i=0;i<4;i++){
+    const tag=document.createElement('button');
+    tag.type='button'; tag.className='tag'; tag.dataset.index=String(i);
+    tag.innerHTML=`<span class="dot" id="sel-dot-${i}"></span> Etiqueta ${i+1} <small id="sel-state-${i}"></small>`;
+    tag.addEventListener('click',()=>{ setActive(i,true); buzz(10); });
+    el.appendChild(tag);
+  }
+  updateSelectorStatus();
+}
+function updateSelectorStatus(){
+  for(let i=0;i<4;i++){
+    const d=labels[i], v=validateData(d);
+    const dot=$('sel-dot-'+i), st=$('sel-state-'+i);
+    dot.className='dot'+(v.ok?' ok':(i===activeIndex?' edit':'')); // verde si OK, celeste si activa
+    st.textContent = v.ok ? 'completa' : (i===activeIndex?'(editando)':'');
+  }
+  qa('.selector .tag').forEach(b=>b.classList.toggle('active', Number(b.dataset.index)===activeIndex));
+}
+
 /* Construcción de slots A4 */
 function buildSlot(i){
   const slot=document.createElement('div');
   slot.className='label-preview';
   slot.dataset.index=String(i);
   slot.innerHTML=`
+    <div class="badge">#${i+1}</div>
     <div class="label-box">
       <div class="brand-row">
         <div class="brand-title">Etiqueta de Envío • GoSpin</div>
@@ -274,9 +351,9 @@ function buildSlot(i){
       <div class="fieldbox obs"><div class="flabel">OBSERVACIONES</div><div class="box" id="p${i}-obs"></div></div>
       <div class="website">WWW.GOSPIN.COM.AR</div>
     </div>
-    <div class="placeholder" id="p${i}-ph">Etiqueta vacía — clic para editar</div>
+    <div class="placeholder" id="p${i}-ph"><div><b>Etiqueta vacía</b><br/>Clic para completar esta etiqueta</div></div>
   `;
-  slot.addEventListener('click',()=>setActive(i,true));
+  slot.addEventListener('click',()=>{ setActive(i,true); buzz(8); });
   return slot;
 }
 
@@ -287,11 +364,15 @@ function initSlots(){
   syncAllSlots();
 }
 
+/* Estado activo */
 function setActive(i,loadForm){
   activeIndex=i;
   $('active-label').textContent=String(i+1);
   qa('.label-preview').forEach(el=>el.classList.toggle('active', el.dataset.index==i));
   if(loadForm) loadFormFromData(labels[i]);
+  updateSelectorStatus();
+  maybeShowNextHint(); // actualizar hint
+  hideOnboardTipIfVisible(); // si estaba el tooltip, ocultarlo
 }
 
 function loadFormFromData(d){
@@ -305,7 +386,7 @@ function loadFormFromData(d){
   renderErrors([]); qa('.invalid').forEach(el=>el.classList.remove('invalid'));
 }
 
-/* Form -> modelo -> preview del slot activo (en MAYÚSCULAS) */
+/* Form -> modelo -> preview (mayúsculas) */
 function syncActiveFromForm(){
   const i=activeIndex, d=labels[i];
   d.remitente=toUC(getVal('f-remitente'));
@@ -323,23 +404,29 @@ function syncActiveFromForm(){
   const ph=$(`p${i}-ph`); if(ph) ph.style.display=empty?'flex':'none';
 
   if(validateData(d).ok) renderErrors([]);
+  updateSelectorStatus();
+  maybeShowNextHint();
 }
-
-function syncAllSlots(){
-  for(let i=0;i<4;i++){
-    const d=labels[i];
-    ['remitente','nombre','domicilio','localidad','cp','cel','obs'].forEach(k=>{
-      const el=$(`p${i}-${k}`); if(el) el.textContent=d[k]||'';
-    });
-    const empty=!d.remitente && !d.nombre && !d.domicilio && !d.localidad && !d.cp && !d.cel && !d.obs;
-    const ph=$(`p${i}-ph`); if(ph) ph.style.display=empty?'flex':'none';
-  }
-}
-
-/* Escuchar cambios del form */
 ['f-remitente','f-nombre','f-domicilio','f-localidad','f-cp','f-cel','f-obs'].forEach(id=>{
   $(id).addEventListener('input', syncActiveFromForm);
 });
+
+/* Hint siguiente */
+function maybeShowNextHint(){
+  const d=labels[activeIndex], v=validateData(d);
+  const hint=$('next-hint');
+  const hasNext = activeIndex<3;
+  hint.style.display = (v.ok && hasNext) ? 'block' : 'none';
+}
+$('btn-next-hint').addEventListener('click', ()=>{ goNext(); buzz([15,40,15]); });
+
+/* Siguiente etiqueta */
+function goNext(){
+  const next = Math.min(3, activeIndex+1);
+  setActive(next,true);
+  $('f-remitente').focus();
+}
+$('btn-next').addEventListener('click', ()=>{ goNext(); buzz(20); });
 
 /* Modo preview */
 function updateModeUI(){
@@ -388,8 +475,6 @@ async function descargarPDF(){
     };
     const v=validateData(d); if(!v.ok){ renderErrors(v.missing); return; }
     renderErrors([]);
-    const pv=$('single-preview'), prev=pv.style.transform; pv.style.transform='none';
-    // volcar al preview térmico en mayúsculas
     $('v-remitente').textContent=d.remitente;
     $('v-nombre').textContent   =d.nombre;
     $('v-domicilio').textContent=d.domicilio;
@@ -398,6 +483,7 @@ async function descargarPDF(){
     $('v-cel').textContent      =d.cel;
     $('v-obs').textContent      =d.obs;
 
+    const pv=$('single-preview'), prev=pv.style.transform; pv.style.transform='none';
     const canvas=await html2canvas(pv,{scale:2,backgroundColor:'#fff'});
     const img=canvas.toDataURL('image/png');
     const pdf=new jsPDF({orientation:'p', unit:'mm', format:[100,150]});
@@ -409,7 +495,7 @@ async function descargarPDF(){
     return;
   }
 
-  // A4: sincronizar activo
+  // A4
   syncActiveFromForm();
   const completeIdx = labels.map((d,i)=>({i,d,v:validateData(d)})).filter(x=>x.v.ok).map(x=>x.i);
   if(completeIdx.length===0){ renderErrors(['Completá al menos una etiqueta (todos los campos obligatorios).']); return; }
@@ -442,11 +528,46 @@ async function descargarPDF(){
   pdf.save(`etiquetas_gospin_A4x4.pdf`);
 }
 
+/* Sync all previews */
+function syncAllSlots(){
+  for(let i=0;i<4;i++){
+    const d=labels[i];
+    ['remitente','nombre','domicilio','localidad','cp','cel','obs'].forEach(k=>{
+      const el=$(`p${i}-${k}`); if(el) el.textContent=d[k]||'';
+    });
+    const empty=!d.remitente && !d.nombre && !d.domicilio && !d.localidad && !d.cp && !d.cel && !d.obs;
+    const ph=$(`p${i}-ph`); if(ph) ph.style.display=empty?'flex':'none';
+  }
+  updateSelectorStatus();
+}
+
+/* Tooltip onboarding */
+function showOnboardTipIfNeeded(){
+  try{
+    const seen = localStorage.getItem(TIP_KEY)==='1';
+    const allEmpty = labels.every(d=>!d.remitente && !d.nombre && !d.domicilio && !d.localidad && !d.cp && !d.cel && !d.obs);
+    if(!seen && allEmpty){
+      $('onboard-tip').style.display='block';
+    }
+  }catch(e){}
+}
+function hideOnboardTipIfVisible(){
+  const el=$('onboard-tip');
+  if(el.style.display!=='none'){
+    el.style.display='none';
+    try{ localStorage.setItem(TIP_KEY,'1'); }catch(e){}
+  }
+}
+$('tip-go').addEventListener('click', ()=>{ hideOnboardTipIfVisible(); setActive(1,true); $('f-remitente').focus(); buzz([12,40,12]); });
+$('tip-ok').addEventListener('click', ()=>{ hideOnboardTipIfVisible(); buzz(8); });
+
 /* Init */
 function init(){
+  buildSelector();
   initSlots();
   updateModeUI();
   $('f-remitente').focus();
+  showOnboardTipIfNeeded();
 }
 init();
 </script>
