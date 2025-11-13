@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-<title>Generador de Etiquetas • GoSpin (v1.9.2)</title>
+<title>Generador de Etiquetas • GoSpin (v1.9.3)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -44,7 +44,6 @@
   .options .group{ padding:10px; border:1px solid var(--border); border-radius:10px; background:#fff; }
   .options label{ display:inline-flex; align-items:center; gap:6px; margin-right:10px; cursor:pointer; }
 
-  /* Selector de etiquetas */
   .selector{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
   .selector .tag{ border:1px solid var(--border); background:#fff; padding:8px 10px; border-radius:10px; font-size:13px; color:#0f172a; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:8px }
   .selector .tag small{ font-weight:700; color:#64748b }
@@ -59,22 +58,7 @@
   .row{ display:grid; grid-template-columns:1fr 180px; gap:10px }
   .field textarea{ min-height:64px; padding:10px 12px; line-height:1.15; resize:vertical }
   .invalid{ border-color:#ef4444 !important; }
-  input[type="text"], textarea{ text-transform:uppercase; } /* ver en MAYÚSCULAS */
-
-  /* Tooltip de onboarding */
-  .tip{
-    display:none; position:relative; border:1px solid #bfdbfe; background:#eff6ff; color:#0f172a;
-    padding:10px 12px; border-radius:10px; font-size:13px;
-  }
-  .tip:after{
-    content:""; position:absolute; top:-8px; left:22px; width:0; height:0;
-    border-left:8px solid transparent; border-right:8px solid transparent;
-    border-bottom:8px solid #eff6ff;
-  }
-  .tip-actions{ margin-top:8px; display:flex; gap:8px; flex-wrap:wrap }
-  .tip button{ border:0; border-radius:8px; padding:6px 10px; font-weight:800; cursor:pointer }
-  .tip .go{ background:var(--brand); color:#fff }
-  .tip .ok{ background:#e2e8f0; color:#0f172a }
+  input[type="text"], textarea{ text-transform:uppercase; }
 
   .hint{ display:none; border:1px dashed #cbd5e1; background:#f8fafc; color:#0f172a; padding:10px 12px; border-radius:10px; font-size:13px }
   .hint b{ color:#0f172a }
@@ -87,7 +71,6 @@
   .preview-card .card-body{ padding:16px; gap:12px }
   .status{ font-size:13px; color:#475569; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 
-  /* PREVIEW GRID — desktop 2×2, mobile 1×N */
   .slots{
     display:grid;
     grid-template-columns: 1fr; /* móvil */
@@ -113,8 +96,12 @@
   .fieldbox{ display:flex; flex-direction:column; gap:.75mm }
   .flabel{ font-size:8.8px; font-weight:900 }
   .box{ border:1px solid #000; padding:2.2mm; min-height:9.2mm; font-size:11.2px; line-height:1.12; white-space:pre-wrap; word-wrap:break-word }
-  .row2{ display:grid; grid-template-columns:1fr 26mm; gap:2.3mm; align-items:start }
+
+  /* Fila con 3 columnas: LOCALIDAD | CP | FECHA */
+  .row2{ display:grid; grid-template-columns:1fr 26mm 26mm; gap:2.3mm; align-items:start }
   .cp .box{ font-size:13.2px; font-weight:400; text-align:left }
+  .fecha .box{ font-size:11.2px; font-weight:400; text-align:left }
+
   .cel .box{ font-size:11.2px; font-weight:400 }
   .obs .box{ min-height:12.5mm }
   .website{ text-align:center; font-weight:900; font-size:10.2px; margin-top:auto }
@@ -127,7 +114,7 @@
 <body>
   <header>
     <div class="page">
-      <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.9.2)</h1>
+      <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.9.3)</h1>
     </div>
   </header>
 
@@ -147,15 +134,6 @@
 
           <!-- Selector 1–4 -->
           <div class="selector" id="selector"></div>
-
-          <!-- Tooltip de onboarding -->
-          <div id="onboard-tip" class="tip">
-            <b>Podés cargar hasta 4 etiquetas.</b> Usá los botones <b>1–4</b> o hacé clic en las tarjetas de la derecha. Probá con la <b>etiqueta 2</b>.
-            <div class="tip-actions">
-              <button type="button" class="go" id="tip-go">Ir a etiqueta 2</button>
-              <button type="button" class="ok" id="tip-ok">Entendido</button>
-            </div>
-          </div>
 
           <!-- Aviso “Siguiente etiqueta” -->
           <div id="next-hint" class="hint" style="display:none">
@@ -244,6 +222,7 @@
                   <div class="row2">
                     <div class="fieldbox loc"><div class="flabel">LOCALIDAD</div><div class="box" id="v-localidad"></div></div>
                     <div class="fieldbox cp"><div class="flabel">CÓDIGO POSTAL</div><div class="box" id="v-cp"></div></div>
+                    <div class="fieldbox fecha"><div class="flabel">FECHA</div><div class="box" id="v-fecha"></div></div>
                   </div>
                   <div class="fieldbox cel"><div class="flabel">CELULAR</div><div class="box" id="v-cel"></div></div>
                   <div class="fieldbox obs"><div class="flabel">OBSERVACIONES</div><div class="box" id="v-obs"></div></div>
@@ -268,21 +247,23 @@ function getVal(id){return ($(id).value||'').trim();}
 function toUC(s){ return (s||'').toUpperCase(); }
 function setInvalid(id,on){$(id).classList.toggle('invalid',!!on);}
 
-/* HAPTICS (vibración suave si está disponible) */
-function buzz(pattern=20){
-  try{
-    if('vibrate' in navigator){ navigator.vibrate(pattern); }
-  }catch(e){}
+/* Fecha Argentina (DD/MM/AAAA) */
+function todayAR(){
+  const d=new Date();
+  const dd=String(d.getDate()).padStart(2,'0');
+  const mm=String(d.getMonth()+1).padStart(2,'0');
+  const yy=d.getFullYear();
+  return `${dd}/${mm}/${yy}`;
 }
+let CURRENT_DATE = todayAR();
 
 const MODE_A4='a4x4_95';
 const MODE_TH='10x15';
-const TIP_KEY='gs_onboard_tip_v191';
 
 let activeIndex=0; // 0..3
 const labels=[empty(),empty(),empty(),empty()];
 
-function empty(){ return {remitente:'',nombre:'',domicilio:'',localidad:'',cp:'',cel:'',obs:''}; }
+function empty(){ return {remitente:'',nombre:'',domicilio:'',localidad:'',cp:'',cel:'',obs:'',fecha:CURRENT_DATE}; }
 
 function validateData(d){
   const m=[];
@@ -313,7 +294,7 @@ function buildSelector(){
     const tag=document.createElement('button');
     tag.type='button'; tag.className='tag'; tag.dataset.index=String(i);
     tag.innerHTML=`<span class="dot" id="sel-dot-${i}"></span> Etiqueta ${i+1} <small id="sel-state-${i}"></small>`;
-    tag.addEventListener('click',()=>{ setActive(i,true); buzz(10); });
+    tag.addEventListener('click',()=>{ setActive(i,true); });
     el.appendChild(tag);
   }
   updateSelectorStatus();
@@ -328,7 +309,7 @@ function updateSelectorStatus(){
   qa('.selector .tag').forEach(b=>b.classList.toggle('active', Number(b.dataset.index)===activeIndex));
 }
 
-/* Construcción de slots A4 */
+/* Construcción de slots A4 (con FECHA y badge que NO se imprime) */
 function buildSlot(i){
   const slot=document.createElement('div');
   slot.className='label-preview';
@@ -346,6 +327,7 @@ function buildSlot(i){
       <div class="row2">
         <div class="fieldbox loc"><div class="flabel">LOCALIDAD</div><div class="box" id="p${i}-localidad"></div></div>
         <div class="fieldbox cp"><div class="flabel">CÓDIGO POSTAL</div><div class="box" id="p${i}-cp"></div></div>
+        <div class="fieldbox fecha"><div class="flabel">FECHA</div><div class="box" id="p${i}-fecha"></div></div>
       </div>
       <div class="fieldbox cel"><div class="flabel">CELULAR</div><div class="box" id="p${i}-cel"></div></div>
       <div class="fieldbox obs"><div class="flabel">OBSERVACIONES</div><div class="box" id="p${i}-obs"></div></div>
@@ -353,7 +335,7 @@ function buildSlot(i){
     </div>
     <div class="placeholder" id="p${i}-ph"><div><b>Etiqueta vacía</b><br/>Clic para completar esta etiqueta</div></div>
   `;
-  slot.addEventListener('click',()=>{ setActive(i,true); buzz(8); });
+  slot.addEventListener('click',()=>setActive(i,true));
   return slot;
 }
 
@@ -371,8 +353,7 @@ function setActive(i,loadForm){
   qa('.label-preview').forEach(el=>el.classList.toggle('active', el.dataset.index==i));
   if(loadForm) loadFormFromData(labels[i]);
   updateSelectorStatus();
-  maybeShowNextHint(); // actualizar hint
-  hideOnboardTipIfVisible(); // si estaba el tooltip, ocultarlo
+  maybeShowNextHint();
 }
 
 function loadFormFromData(d){
@@ -386,7 +367,7 @@ function loadFormFromData(d){
   renderErrors([]); qa('.invalid').forEach(el=>el.classList.remove('invalid'));
 }
 
-/* Form -> modelo -> preview (mayúsculas) */
+/* Form -> modelo -> preview (mayúsculas) + fecha auto */
 function syncActiveFromForm(){
   const i=activeIndex, d=labels[i];
   d.remitente=toUC(getVal('f-remitente'));
@@ -396,8 +377,9 @@ function syncActiveFromForm(){
   d.cp       =getVal('f-cp');
   d.cel      =getVal('f-cel');
   d.obs      =toUC(getVal('f-obs'));
+  d.fecha    = CURRENT_DATE; // fecha del sistema
 
-  ['remitente','nombre','domicilio','localidad','cp','cel','obs'].forEach(k=>{
+  ['remitente','nombre','domicilio','localidad','cp','cel','obs','fecha'].forEach(k=>{
     const el=$(`p${i}-${k}`); if(el) el.textContent=d[k]||'';
   });
   const empty=!d.remitente && !d.nombre && !d.domicilio && !d.localidad && !d.cp && !d.cel && !d.obs;
@@ -418,7 +400,7 @@ function maybeShowNextHint(){
   const hasNext = activeIndex<3;
   hint.style.display = (v.ok && hasNext) ? 'block' : 'none';
 }
-$('btn-next-hint').addEventListener('click', ()=>{ goNext(); buzz([15,40,15]); });
+$('btn-next-hint').addEventListener('click', ()=> goNext());
 
 /* Siguiente etiqueta */
 function goNext(){
@@ -426,7 +408,7 @@ function goNext(){
   setActive(next,true);
   $('f-remitente').focus();
 }
-$('btn-next').addEventListener('click', ()=>{ goNext(); buzz(20); });
+$('btn-next').addEventListener('click', goNext);
 
 /* Modo preview */
 function updateModeUI(){
@@ -440,6 +422,7 @@ function updateModeUI(){
     $('v-domicilio').textContent=toUC(getVal('f-domicilio'));
     $('v-localidad').textContent=toUC(getVal('f-localidad'));
     $('v-cp').textContent       =getVal('f-cp');
+    $('v-fecha').textContent    =CURRENT_DATE;
     $('v-cel').textContent      =getVal('f-cel');
     $('v-obs').textContent      =toUC(getVal('f-obs'));
   }
@@ -460,6 +443,11 @@ $('btn-clear').addEventListener('click', ()=>{
 $('btn-pdf').addEventListener('click', descargarPDF);
 
 async function descargarPDF(){
+  // Refresca fecha por si cambió el día antes de imprimir
+  CURRENT_DATE = todayAR();
+  for(let i=0;i<4;i++){ labels[i].fecha=CURRENT_DATE; }
+  syncAllSlots();
+
   const { jsPDF }=window.jspdf;
   const mode=(q('input[name="pdfsize"]:checked')||{}).value||MODE_A4;
 
@@ -471,15 +459,18 @@ async function descargarPDF(){
       localidad:toUC(getVal('f-localidad')),
       cp:getVal('f-cp'),
       cel:getVal('f-cel'),
-      obs:toUC(getVal('f-obs'))
+      obs:toUC(getVal('f-obs')),
+      fecha:CURRENT_DATE
     };
     const v=validateData(d); if(!v.ok){ renderErrors(v.missing); return; }
     renderErrors([]);
+    // volcar al preview térmico
     $('v-remitente').textContent=d.remitente;
     $('v-nombre').textContent   =d.nombre;
     $('v-domicilio').textContent=d.domicilio;
     $('v-localidad').textContent=d.localidad;
     $('v-cp').textContent       =d.cp;
+    $('v-fecha').textContent    =d.fecha;
     $('v-cel').textContent      =d.cel;
     $('v-obs').textContent      =d.obs;
 
@@ -507,8 +498,10 @@ async function descargarPDF(){
   const top =(pageH-(H*2+gutterY))/2;
 
   async function slotToImage(idx){
+    // clonar el nodo y remover elementos SOLO de pantalla (placeholder y badge)
     const node=qa('.label-preview')[idx].cloneNode(true);
     const ph=node.querySelector('.placeholder'); if(ph) ph.remove();
+    const bd=node.querySelector('.badge'); if(bd) bd.remove(); // <-- no imprimir número
     node.style.position='fixed'; node.style.left='-9999px'; node.style.top='-9999px';
     document.body.appendChild(node);
     const canvas=await html2canvas(node,{scale:2,backgroundColor:'#fff'});
@@ -528,11 +521,12 @@ async function descargarPDF(){
   pdf.save(`etiquetas_gospin_A4x4.pdf`);
 }
 
-/* Sync all previews */
+/* Sync all previews (incluye FECHA) */
 function syncAllSlots(){
   for(let i=0;i<4;i++){
     const d=labels[i];
-    ['remitente','nombre','domicilio','localidad','cp','cel','obs'].forEach(k=>{
+    if(!d.fecha) d.fecha=CURRENT_DATE;
+    ['remitente','nombre','domicilio','localidad','cp','cel','obs','fecha'].forEach(k=>{
       const el=$(`p${i}-${k}`); if(el) el.textContent=d[k]||'';
     });
     const empty=!d.remitente && !d.nombre && !d.domicilio && !d.localidad && !d.cp && !d.cel && !d.obs;
@@ -541,33 +535,15 @@ function syncAllSlots(){
   updateSelectorStatus();
 }
 
-/* Tooltip onboarding */
-function showOnboardTipIfNeeded(){
-  try{
-    const seen = localStorage.getItem(TIP_KEY)==='1';
-    const allEmpty = labels.every(d=>!d.remitente && !d.nombre && !d.domicilio && !d.localidad && !d.cp && !d.cel && !d.obs);
-    if(!seen && allEmpty){
-      $('onboard-tip').style.display='block';
-    }
-  }catch(e){}
-}
-function hideOnboardTipIfVisible(){
-  const el=$('onboard-tip');
-  if(el.style.display!=='none'){
-    el.style.display='none';
-    try{ localStorage.setItem(TIP_KEY,'1'); }catch(e){}
-  }
-}
-$('tip-go').addEventListener('click', ()=>{ hideOnboardTipIfVisible(); setActive(1,true); $('f-remitente').focus(); buzz([12,40,12]); });
-$('tip-ok').addEventListener('click', ()=>{ hideOnboardTipIfVisible(); buzz(8); });
-
 /* Init */
 function init(){
   buildSelector();
   initSlots();
   updateModeUI();
   $('f-remitente').focus();
-  showOnboardTipIfNeeded();
+  // Primera carga: forzar FECHA visible en todos los slots
+  for(let i=0;i<4;i++){ const el=$(`p${i}-fecha`); if(el) el.textContent=CURRENT_DATE; }
+  $('v-fecha').textContent = CURRENT_DATE;
 }
 init();
 </script>
