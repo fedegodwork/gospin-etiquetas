@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-<title>Generador de Etiquetas • GoSpin (v1.9.3)</title>
+<title>Generador de Etiquetas • GoSpin (v1.9.4)</title>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -89,18 +89,19 @@
   .placeholder b{ color:#64748b }
 
   .label-box{ position:absolute; inset:6.5mm; border:1.3px solid #000; padding:4.2mm; display:flex; flex-direction:column; gap:2.2mm }
-  .brand-row{ display:grid; grid-template-columns:1fr auto; align-items:center }
+  .brand-row{ display:grid; grid-template-columns:1fr auto; align-items:flex-start }
+  .brand-left{ display:flex; flex-direction:column; gap:1mm }
   .brand-title{ font-weight:900; font-size:11.2px; letter-spacing:.2px }
+  .brand-date{ font-size:9px; font-weight:700 }
   .brand-logo{ width:17mm; height:auto; object-fit:contain }
 
   .fieldbox{ display:flex; flex-direction:column; gap:.75mm }
   .flabel{ font-size:8.8px; font-weight:900 }
   .box{ border:1px solid #000; padding:2.2mm; min-height:9.2mm; font-size:11.2px; line-height:1.12; white-space:pre-wrap; word-wrap:break-word }
 
-  /* Fila con 3 columnas: LOCALIDAD | CP | FECHA */
-  .row2{ display:grid; grid-template-columns:1fr 26mm 26mm; gap:2.3mm; align-items:start }
+  /* Fila LOCALIDAD | CP (2 columnas) */
+  .row2{ display:grid; grid-template-columns:1fr 26mm; gap:2.3mm; align-items:start }
   .cp .box{ font-size:13.2px; font-weight:400; text-align:left }
-  .fecha .box{ font-size:11.2px; font-weight:400; text-align:left }
 
   .cel .box{ font-size:11.2px; font-weight:400 }
   .obs .box{ min-height:12.5mm }
@@ -114,7 +115,7 @@
 <body>
   <header>
     <div class="page">
-      <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.9.3)</h1>
+      <h1>Generador de Etiquetas (10×15 cm) • GoSpin (v1.9.4)</h1>
     </div>
   </header>
 
@@ -213,7 +214,10 @@
               <div class="single" id="single-preview">
                 <div class="label-box">
                   <div class="brand-row">
-                    <div class="brand-title">Etiqueta de Envío • GoSpin</div>
+                    <div class="brand-left">
+                      <div class="brand-title">Etiqueta de Envío • GoSpin</div>
+                      <div class="brand-date" id="v-fecha"></div>
+                    </div>
                     <img src="gospinlogo.png" alt="GoSpin" class="brand-logo" />
                   </div>
                   <div class="fieldbox remitente"><div class="flabel">REMITENTE</div><div class="box" id="v-remitente"></div></div>
@@ -222,7 +226,6 @@
                   <div class="row2">
                     <div class="fieldbox loc"><div class="flabel">LOCALIDAD</div><div class="box" id="v-localidad"></div></div>
                     <div class="fieldbox cp"><div class="flabel">CÓDIGO POSTAL</div><div class="box" id="v-cp"></div></div>
-                    <div class="fieldbox fecha"><div class="flabel">FECHA</div><div class="box" id="v-fecha"></div></div>
                   </div>
                   <div class="fieldbox cel"><div class="flabel">CELULAR</div><div class="box" id="v-cel"></div></div>
                   <div class="fieldbox obs"><div class="flabel">OBSERVACIONES</div><div class="box" id="v-obs"></div></div>
@@ -309,7 +312,7 @@ function updateSelectorStatus(){
   qa('.selector .tag').forEach(b=>b.classList.toggle('active', Number(b.dataset.index)===activeIndex));
 }
 
-/* Construcción de slots A4 (con FECHA y badge que NO se imprime) */
+/* Slots A4 con fecha debajo del título */
 function buildSlot(i){
   const slot=document.createElement('div');
   slot.className='label-preview';
@@ -318,7 +321,10 @@ function buildSlot(i){
     <div class="badge">#${i+1}</div>
     <div class="label-box">
       <div class="brand-row">
-        <div class="brand-title">Etiqueta de Envío • GoSpin</div>
+        <div class="brand-left">
+          <div class="brand-title">Etiqueta de Envío • GoSpin</div>
+          <div class="brand-date" id="p${i}-fecha"></div>
+        </div>
         <img src="gospinlogo.png" alt="GoSpin" class="brand-logo" />
       </div>
       <div class="fieldbox remitente"><div class="flabel">REMITENTE</div><div class="box" id="p${i}-remitente"></div></div>
@@ -327,7 +333,6 @@ function buildSlot(i){
       <div class="row2">
         <div class="fieldbox loc"><div class="flabel">LOCALIDAD</div><div class="box" id="p${i}-localidad"></div></div>
         <div class="fieldbox cp"><div class="flabel">CÓDIGO POSTAL</div><div class="box" id="p${i}-cp"></div></div>
-        <div class="fieldbox fecha"><div class="flabel">FECHA</div><div class="box" id="p${i}-fecha"></div></div>
       </div>
       <div class="fieldbox cel"><div class="flabel">CELULAR</div><div class="box" id="p${i}-cel"></div></div>
       <div class="fieldbox obs"><div class="flabel">OBSERVACIONES</div><div class="box" id="p${i}-obs"></div></div>
@@ -367,7 +372,7 @@ function loadFormFromData(d){
   renderErrors([]); qa('.invalid').forEach(el=>el.classList.remove('invalid'));
 }
 
-/* Form -> modelo -> preview (mayúsculas) + fecha auto */
+/* Form -> modelo -> preview (mayúsculas) + fecha */
 function syncActiveFromForm(){
   const i=activeIndex, d=labels[i];
   d.remitente=toUC(getVal('f-remitente'));
@@ -377,7 +382,7 @@ function syncActiveFromForm(){
   d.cp       =getVal('f-cp');
   d.cel      =getVal('f-cel');
   d.obs      =toUC(getVal('f-obs'));
-  d.fecha    = CURRENT_DATE; // fecha del sistema
+  d.fecha    = CURRENT_DATE;
 
   ['remitente','nombre','domicilio','localidad','cp','cel','obs','fecha'].forEach(k=>{
     const el=$(`p${i}-${k}`); if(el) el.textContent=d[k]||'';
@@ -443,7 +448,7 @@ $('btn-clear').addEventListener('click', ()=>{
 $('btn-pdf').addEventListener('click', descargarPDF);
 
 async function descargarPDF(){
-  // Refresca fecha por si cambió el día antes de imprimir
+  // Actualizar fecha por si cambió el día
   CURRENT_DATE = todayAR();
   for(let i=0;i<4;i++){ labels[i].fecha=CURRENT_DATE; }
   syncAllSlots();
@@ -498,10 +503,10 @@ async function descargarPDF(){
   const top =(pageH-(H*2+gutterY))/2;
 
   async function slotToImage(idx){
-    // clonar el nodo y remover elementos SOLO de pantalla (placeholder y badge)
+    // clonar y sacar placeholder + badge (número solo pantalla)
     const node=qa('.label-preview')[idx].cloneNode(true);
     const ph=node.querySelector('.placeholder'); if(ph) ph.remove();
-    const bd=node.querySelector('.badge'); if(bd) bd.remove(); // <-- no imprimir número
+    const bd=node.querySelector('.badge'); if(bd) bd.remove();
     node.style.position='fixed'; node.style.left='-9999px'; node.style.top='-9999px';
     document.body.appendChild(node);
     const canvas=await html2canvas(node,{scale:2,backgroundColor:'#fff'});
@@ -541,9 +546,9 @@ function init(){
   initSlots();
   updateModeUI();
   $('f-remitente').focus();
-  // Primera carga: forzar FECHA visible en todos los slots
+  // setear fecha visible de entrada
   for(let i=0;i<4;i++){ const el=$(`p${i}-fecha`); if(el) el.textContent=CURRENT_DATE; }
-  $('v-fecha').textContent = CURRENT_DATE;
+  if($('v-fecha')) $('v-fecha').textContent = CURRENT_DATE;
 }
 init();
 </script>
